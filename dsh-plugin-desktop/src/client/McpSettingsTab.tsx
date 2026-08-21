@@ -1,6 +1,6 @@
 import { useMemo, useState, useSyncExternalStore, type ReactNode } from 'react'
 import type { SettingsScope } from '@deepseek-ai/dsh-client-runtime/client'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import {
   DESKTOP_MCP_SERVER_TEMPLATES,
   desktopMcpServerFromTemplate,
@@ -15,8 +15,7 @@ export interface McpSettingsTabInjected {
   readonly scope: SettingsScope<DesktopMcpSettings>
 }
 
-export type McpSettingsTabProps = PropsRuntime<'settings.plugins.tab'>
-  & PropsLocale<'dsh-desktop'>
+export type McpSettingsTabProps = PropsLocale<'dsh-desktop'>
   & InjectFace<McpSettingsTabInjected>
 
 function templateLabel(id: string): DesktopLocaleKey {

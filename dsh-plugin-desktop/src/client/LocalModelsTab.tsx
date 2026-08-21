@@ -1,6 +1,6 @@
 import { useState, useSyncExternalStore, type ReactNode } from 'react'
 import type { SettingsScope } from '@deepseek-ai/dsh-client-runtime/client'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { DesktopWorkbenchSettings } from '../workbench-settings.ts'
 import {
   applyLocalModel,
@@ -13,8 +13,7 @@ export interface LocalModelsTabInjected {
   readonly scope: SettingsScope<DesktopWorkbenchSettings>
 }
 
-export type LocalModelsTabProps = PropsRuntime<'settings.plugins.tab'>
-  & PropsLocale<'dsh-desktop'>
+export type LocalModelsTabProps = PropsLocale<'dsh-desktop'>
   & InjectFace<LocalModelsTabInjected>
 
 export function LocalModelsTab({ scope, t }: Pick<LocalModelsTabProps, 'scope' | 't'>): ReactNode {

@@ -93,20 +93,16 @@ export function workerPackCatalogSelected(
   ))
 }
 
-/** Desktop-owned Internal Market tab. Sibling of Plugin Market, not a community package. */
-export const DESKTOP_INTERNAL_MARKET_TAB_ID = 'desktop-internal-market'
+/** Desktop-owned settings.section. Sibling of official Plugins, not a community package. */
+export const DESKTOP_INTERNAL_MARKET_SECTION_ID = 'desktop-internal-market'
 
-/** Top-level Plugins tabs registered by the desktop client. */
-export const DESKTOP_PLUGIN_SETTINGS_TAB_IDS = [
-  'desktop-worker-pack',
-  DESKTOP_INTERNAL_MARKET_TAB_ID,
-  'desktop-mcp',
-] as const
+/** Inner pills inside the Internal Market section, not official Plugins tabs. */
+export const DESKTOP_INTERNAL_MARKET_PAGE_IDS = ['featured', 'workbench', 'mcp'] as const
 
-/** Workbench pages that share the Worker pack tab instead of adding more top tabs. */
+/** Workbench pages under Internal Market → 工作台. */
 export const DESKTOP_WORKBENCH_PAGE_IDS = ['models', 'home', 'remote'] as const
 
-/** User-initiated install groups on the Internal Market tab. */
+/** User-initiated install groups on Internal Market → 精选. */
 export type WorkerPackInstallKind = 'workspace' | 'office-im' | 'later'
 
 /** One profile inventory row the worker pack can match by npm name. */
