@@ -12,8 +12,12 @@ import {
   COMPANY_STORE_ENDPOINT,
   COMPANY_STORE_HOSTNAME,
   COMPANY_STORE_KEY,
+  COMPANY_STORE_LOCAL_DEV,
+  COMPANY_STORE_PLACEHOLDER_ENDPOINT,
+  COMPANY_STORE_PLACEHOLDER_HOSTNAME,
   COMPANY_STORE_PROVIDER_ID,
   companyStoreAdapter,
+  resolveCompanyStoreTarget,
 } from '../src/adapters/company-store.js'
 import { DSH_1024STORE_KEY } from '../src/adapters/dsh-1024store.js'
 import type { CatalogHttpClient, LocalSourceRecord } from '../src/contracts/types.js'
@@ -65,6 +69,38 @@ describe('company-store adapter', () => {
     expect(COMPANY_STORE_KEY).not.toBe(DSH_1024STORE_KEY)
     expect(COMPANY_STORE_HOSTNAME).toBe('plugins.company.example')
     expect(COMPANY_STORE_ADAPTER_ID).toBe('market.company-store-v1')
+  })
+
+  it('defaults to the placeholder HTTPS apex when local env is unset', () => {
+    expect(COMPANY_STORE_LOCAL_DEV).toBe(false)
+    expect(COMPANY_STORE_ENDPOINT).toBe(COMPANY_STORE_PLACEHOLDER_ENDPOINT)
+    expect(COMPANY_STORE_HOSTNAME).toBe(COMPANY_STORE_PLACEHOLDER_HOSTNAME)
+    expect(resolveCompanyStoreTarget({})).toEqual({
+      endpoint: COMPANY_STORE_PLACEHOLDER_ENDPOINT,
+      hostname: COMPANY_STORE_PLACEHOLDER_HOSTNAME,
+      localDev: false,
+    })
+  })
+
+  it('resolves a loopback-only local override from DSH_COMPANY_STORE_LOCAL_ENDPOINT', () => {
+    expect(resolveCompanyStoreTarget({ DSH_COMPANY_STORE_LOCAL_ENDPOINT: '1' })).toEqual({
+      endpoint: 'http://127.0.0.1:8787/api/v1/plugins',
+      hostname: '127.0.0.1',
+      localDev: true,
+    })
+    expect(resolveCompanyStoreTarget({
+      DSH_COMPANY_STORE_LOCAL_ENDPOINT: 'http://127.0.0.1:9999/api/v1/plugins',
+    })).toEqual({
+      endpoint: 'http://127.0.0.1:9999/api/v1/plugins',
+      hostname: '127.0.0.1',
+      localDev: true,
+    })
+    expect(() => resolveCompanyStoreTarget({
+      DSH_COMPANY_STORE_LOCAL_ENDPOINT: 'https://evil.example/api/v1/plugins',
+    })).toThrow(/127\.0\.0\.1/)
+    expect(() => resolveCompanyStoreTarget({
+      DSH_COMPANY_STORE_LOCAL_ENDPOINT: 'http://192.168.1.1/api/v1/plugins',
+    })).toThrow(/127\.0\.0\.1/)
   })
 
   it('pins origin and pages installable npm targets from the Store wire shape', async () => {
