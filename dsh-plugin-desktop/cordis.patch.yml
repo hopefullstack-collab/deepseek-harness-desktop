@@ -24,6 +24,9 @@
       name: dsh-plugin-desktop/mcp
     - id: desktop-workbench
       name: dsh-plugin-desktop/workbench
+    # Install bridge only — the Company Pack itself stays opt-in (not inserted here).
+    - id: desktop-company-pack-install
+      name: dsh-plugin-desktop/company-pack-install
 
 # A desktop launch has no terminal operator waiting for the Web readiness line.
 - id: web-runtime

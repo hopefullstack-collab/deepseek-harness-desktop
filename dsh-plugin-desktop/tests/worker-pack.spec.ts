@@ -2,10 +2,13 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { en, zh } from '../src/client/locales.ts'
 import {
+  COMPANY_PACK_PACKAGE_NAME,
+  COMPANY_PACK_RECOMMENDED_ENTRY,
   DESKTOP_DEFAULT_AGENT_PRESET,
   DESKTOP_INTERNAL_MARKET_TAB_ID,
   DESKTOP_PLUGIN_SETTINGS_TAB_IDS,
   DESKTOP_WORKBENCH_PAGE_IDS,
+  buildCompanyPackInstallPlan,
   desktopAgentPresetConfig,
   findCatalogItemForPackage,
   isWorkerPackRecommendedPackage,
@@ -40,6 +43,19 @@ describe('desktop worker pack', () => {
     ])
   })
 
+  it('exposes the optional Company Pack on Internal Market without silent install', () => {
+    expect(COMPANY_PACK_RECOMMENDED_ENTRY.packageName).toBe(COMPANY_PACK_PACKAGE_NAME)
+    expect(COMPANY_PACK_RECOMMENDED_ENTRY.role).toBe('company-pack')
+    const plan = buildCompanyPackInstallPlan()
+    expect(plan.entries[0]?.kind).toBe('pack')
+    expect(plan.companyChildren.length).toBeGreaterThan(0)
+    expect(plan.communityRecommendations.length).toBeGreaterThan(0)
+    expect(recommendedPluginsFor('company-pack').map(plugin => plugin.packageName)).toEqual([
+      'dsh-better-sidebar',
+      'dsh-context',
+    ])
+  })
+
   it('starts office IM from official DingTalk Stream and WeCom without gating community installs', () => {
     expect(OFFICE_IM_RECOMMENDED_PLUGINS.map(plugin => plugin.packageName)).toEqual([
       'dsh-dingtalk-channel',
@@ -67,6 +83,7 @@ describe('desktop worker pack', () => {
     expect(zh.internalMarketBody).toContain('不是独家')
     expect(zh.internalMarketBody).toContain('插件市场')
     expect(zh.internalMarketBody).toContain('不会开机自动装')
+    expect(zh.companyPackBody).toContain('确认')
     expect(zh.officeImBody).toContain('不是白名单')
     expect(zh.officeImBody).toContain('社区插件')
     expect(zh.workerBody).toContain('内部市场')
@@ -75,6 +92,7 @@ describe('desktop worker pack', () => {
     expect(en.internalMarketBody).toContain('not an exclusive')
     expect(en.internalMarketBody).toContain('Plugin market')
     expect(en.internalMarketBody).toContain('nothing installs at launch')
+    expect(en.companyPackBody).toContain('confirm')
     expect(en.officeImBody).toContain('not an allowlist')
     expect(en.officeImBody).toContain('community')
     expect(en.workerBody).toContain('Internal Market')
@@ -96,7 +114,10 @@ describe('desktop worker pack', () => {
     const pack = readFileSync(new URL('../src/client/WorkerPackTab.tsx', import.meta.url), 'utf8')
     const hub = readFileSync(new URL('../src/client/DesktopWorkbenchHub.tsx', import.meta.url), 'utf8')
     const client = readFileSync(new URL('../src/client/index.ts', import.meta.url), 'utf8')
+    const patch = readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
     expect(market).toContain('installRecommendedPlugins')
+    expect(market).toContain('installCompanyPackWithCascade')
+    expect(market).toContain('COMPANY_PACK_RECOMMENDED_ENTRY')
     expect(market).toContain('WORKER_PACK_RECOMMENDED_PLUGINS')
     expect(market).toContain('OFFICE_IM_RECOMMENDED_PLUGINS')
     expect(market).toContain('WORKBENCH_LATER_RECOMMENDED_PLUGINS')
@@ -107,6 +128,8 @@ describe('desktop worker pack', () => {
     expect(client).toContain('DESKTOP_INTERNAL_MARKET_TAB_ID')
     expect(client).toContain('InternalMarketTab')
     expect(client).not.toMatch(/id: ['"]community-market['"]/)
+    expect(patch).toContain('dsh-plugin-desktop/company-pack-install')
+    expect(patch).not.toMatch(/name:\s*dsh-plugin-company-pack\b/u)
   })
 
   it('groups one-click packs without making them a silent boot list', () => {
@@ -122,6 +145,7 @@ describe('desktop worker pack', () => {
       'dsh-web-mobile',
     ])
     expect(isWorkerPackRecommendedPackage('dsh-better-sidebar')).toBe(true)
+    expect(isWorkerPackRecommendedPackage('dsh-plugin-company-pack')).toBe(true)
     expect(isWorkerPackRecommendedPackage('dsh-im')).toBe(false)
   })
 

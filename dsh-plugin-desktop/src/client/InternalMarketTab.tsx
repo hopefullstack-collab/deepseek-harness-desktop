@@ -1,9 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import {
+  COMPANY_PACK_RECOMMENDED_ENTRY,
   OFFICE_IM_RECOMMENDED_PLUGINS,
   WORKBENCH_LATER_RECOMMENDED_PLUGINS,
   WORKER_PACK_RECOMMENDED_PLUGINS,
+  buildCompanyPackInstallPlan,
   recommendedPackageInstalled,
   recommendedPluginsFor,
   summarizeWorkerPackInstallResults,
@@ -12,7 +14,9 @@ import {
 } from '../worker-pack.ts'
 import type { DesktopLocaleKey } from './locales.ts'
 import {
+  installCompanyPackWithCascade,
   installRecommendedPlugins,
+  readCompanyPackPreview,
   readMarketSources,
   readWorkerPackInstallations,
   requestWorkerPackRestart,
@@ -29,6 +33,7 @@ const ROLE_KEY: Record<WorkerPackRecommendedPlugin['role'], DesktopLocaleKey> = 
   'workspace-mobile': 'pluginWorkspaceMobile',
   'office-dingtalk': 'pluginOfficeDingtalk',
   'office-wecom': 'pluginOfficeWecom',
+  'company-pack': 'pluginCompanyPack',
 }
 
 function RecommendedPluginCard({
@@ -76,6 +81,7 @@ type CatalogState =
 type InstallState =
   | { readonly status: 'idle' }
   | { readonly status: 'busy' }
+  | { readonly status: 'confirm-company-pack'; readonly entries: readonly { readonly packageName: string; readonly displayName: string; readonly kind: string }[] }
   | { readonly status: 'done'; readonly tone: 'ok' | 'error'; readonly message: DesktopLocaleKey; readonly restartToken?: string }
 
 /** Four-way move glyph matching official settings-tab chrome, without primitives. */
@@ -107,6 +113,7 @@ function InternalMarketGlyph(): ReactNode {
 export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
   const [catalog, setCatalog] = useState<CatalogState>({ status: 'loading' })
   const [installedNames, setInstalledNames] = useState<readonly string[]>([])
+  const [companyPackEnabled, setCompanyPackEnabled] = useState(false)
   const [install, setInstall] = useState<InstallState>({ status: 'idle' })
 
   const refreshInstallations = async (signal?: AbortSignal): Promise<void> => {
@@ -127,6 +134,10 @@ export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
       () => { setCatalog({ status: 'error' }) },
     )
     void refreshInstallations(controller.signal).catch(() => undefined)
+    void readCompanyPackPreview(controller.signal).then(
+      (preview) => { setCompanyPackEnabled(preview.enabled) },
+      () => undefined,
+    )
     return () => controller.abort()
   }, [])
 
@@ -160,6 +171,32 @@ export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
     runInstall(recommendedPluginsFor(kind).map(plugin => plugin.packageName))
   }
 
+  const beginCompanyPackConfirm = (): void => {
+    setInstall({
+      status: 'confirm-company-pack',
+      entries: buildCompanyPackInstallPlan().entries,
+    })
+  }
+
+  const confirmCompanyPack = (): void => {
+    setInstall({ status: 'busy' })
+    void installCompanyPackWithCascade().then(
+      async (outcome) => {
+        await refreshInstallations().catch(() => undefined)
+        setCompanyPackEnabled(outcome.packEnabled)
+        setCatalog({ status: 'ready', selected: true })
+        const message = summarizeWorkerPackInstallResults(outcome.results)
+        setInstall({
+          status: 'done',
+          tone: message === 'installError' || message === 'installMissing' ? 'error' : 'ok',
+          message,
+          ...(outcome.restartToken === undefined ? {} : { restartToken: outcome.restartToken }),
+        })
+      },
+      () => { setInstall({ status: 'done', tone: 'error', message: 'installError' }) },
+    )
+  }
+
   const restartNow = (): void => {
     if (install.status !== 'done' || install.restartToken === undefined) return
     void requestWorkerPackRestart(install.restartToken).catch(() => undefined)
@@ -179,6 +216,64 @@ export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
           <p>{t('internalMarketBody')}</p>
         </div>
       </header>
+      <div className="dshWorkerSection">
+        <h2>{t('companyPackTitle')}</h2>
+        <p>{t('companyPackBody')}</p>
+        <article className="dshWorkerCard">
+          <h3>{COMPANY_PACK_RECOMMENDED_ENTRY.displayName}</h3>
+          <p>{t('pluginCompanyPack')}</p>
+          <div className="dshWorkerMeta">
+            <span>{t('pluginPackage')}</span>
+            <code className="dshWorkerCode">{COMPANY_PACK_RECOMMENDED_ENTRY.packageName}</code>
+            <a href={COMPANY_PACK_RECOMMENDED_ENTRY.repositoryUrl} target="_blank" rel="noreferrer">{t('openRepository')}</a>
+          </div>
+          <div className="dshWorkerActions">
+            <button
+              type="button"
+              className="dshWorkerButton"
+              disabled={busy || companyPackEnabled}
+              onClick={beginCompanyPackConfirm}
+            >
+              {companyPackEnabled ? t('installed') : t('installCompanyPack')}
+            </button>
+          </div>
+        </article>
+        {install.status === 'confirm-company-pack'
+          ? (
+              <div className="dshWorkerSection" role="dialog" aria-label={t('confirmCompanyPackTitle')}>
+                <h2>{t('confirmCompanyPackTitle')}</h2>
+                <p>{t('confirmCompanyPackBody')}</p>
+                <ul>
+                  {install.entries.map(entry => (
+                    <li key={`${entry.kind}:${entry.packageName}`}>
+                      <code className="dshWorkerCode">{entry.packageName}</code>
+                      {' '}
+                      —
+                      {' '}
+                      {entry.displayName}
+                      {' '}
+                      (
+                      {entry.kind}
+                      )
+                    </li>
+                  ))}
+                </ul>
+                <div className="dshWorkerActions">
+                  <button type="button" className="dshWorkerButton" onClick={confirmCompanyPack}>
+                    {t('confirmCompanyPack')}
+                  </button>
+                  <button
+                    type="button"
+                    className="dshWorkerButton dshWorkerButtonSecondary"
+                    onClick={() => setInstall({ status: 'idle' })}
+                  >
+                    {t('cancelCompanyPack')}
+                  </button>
+                </div>
+              </div>
+            )
+          : null}
+      </div>
       <div className="dshWorkerSection">
         <h2>{t('pluginsTitle')}</h2>
         <p>{t('pluginsBody')}</p>

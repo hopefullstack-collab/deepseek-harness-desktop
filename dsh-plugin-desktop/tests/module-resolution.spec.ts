@@ -16,6 +16,8 @@ const hooks = vi.hoisted(() => ({
       '@deepseek-ai/dsh-web-app': '/current/node_modules/@deepseek-ai/dsh-web-app/lib/index.js',
       'dshmarket': '/current/node_modules/dshmarket/lib/index.js',
       'dsh-community-market': '/current/node_modules/dsh-community-market/lib/index.js',
+      'dsh-plugin-company-pack': '/current/node_modules/dsh-plugin-company-pack/lib/index.js',
+      'dsh-plugin-company-example': '/current/node_modules/dsh-plugin-company-example/lib/index.js',
     }
     const resolved = exports[specifier]
     if (resolved !== undefined) return resolved
@@ -142,6 +144,8 @@ describe('installProfilePackageResolver', () => {
   it.each([
     ['dshmarket', 'file:///current/node_modules/dshmarket/lib/index.js'],
     ['dsh-community-market', 'file:///current/node_modules/dsh-community-market/lib/index.js'],
+    ['dsh-plugin-company-pack', 'file:///current/node_modules/dsh-plugin-company-pack/lib/index.js'],
+    ['dsh-plugin-company-example', 'file:///current/node_modules/dsh-plugin-company-example/lib/index.js'],
   ])('resolves Desktop-owned provider %s without consulting the profile', (specifier, url) => {
     installProfilePackageResolver('file:///C:/Users/test/profile/package.json')
     const nextResolve = vi.fn()

@@ -7263,6 +7263,35 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"dsh-plugin-company-example@npm:0.1.0-dev.0, dsh-plugin-company-example@workspace:dsh-plugin-company-example":
+  version: 0.0.0-use.local
+  resolution: "dsh-plugin-company-example@workspace:dsh-plugin-company-example"
+  dependencies:
+    "@deepseek-ai/cordis": "npm:4.0.1"
+    "@types/node": "npm:^22.20.0"
+    tsdown: "npm:0.22.2"
+    typescript: "npm:6.0.3"
+    vitest: "npm:4.1.8"
+  peerDependencies:
+    "@deepseek-ai/cordis": 4.0.1
+  languageName: unknown
+  linkType: soft
+
+"dsh-plugin-company-pack@npm:0.1.0-dev.0, dsh-plugin-company-pack@workspace:dsh-plugin-company-pack":
+  version: 0.0.0-use.local
+  resolution: "dsh-plugin-company-pack@workspace:dsh-plugin-company-pack"
+  dependencies:
+    "@deepseek-ai/cordis": "npm:4.0.1"
+    "@types/node": "npm:^22.20.0"
+    dsh-plugin-company-example: "npm:0.1.0-dev.0"
+    tsdown: "npm:0.22.2"
+    typescript: "npm:6.0.3"
+    vitest: "npm:4.1.8"
+  peerDependencies:
+    "@deepseek-ai/cordis": 4.0.1
+  languageName: unknown
+  linkType: soft
+
 "dsh-plugin-desktop@workspace:dsh-plugin-desktop":
   version: 0.0.0-use.local
   resolution: "dsh-plugin-desktop@workspace:dsh-plugin-desktop"
@@ -7380,6 +7409,7 @@ __metadata:
     "@types/react": "npm:^18"
     adm-zip: "npm:^0.6.0"
     dsh-community-market: "npm:0.1.0-dev.0"
+    dsh-plugin-company-pack: "npm:0.1.0-dev.0"
     electron: "npm:43.4.0"
     electron-builder: "npm:26.15.7"
     koffi: "npm:3.1.5"

@@ -199,3 +199,84 @@ export async function requestWorkerPackRestart(
     ...(signal === undefined ? {} : { signal }),
   }))
 }
+
+interface CompanyPackPreviewResponse {
+  readonly enabled: boolean
+  readonly packageName: string
+  readonly displayName: string
+  readonly plan: {
+    readonly entries: readonly {
+      readonly packageName: string
+      readonly displayName: string
+      readonly kind: 'pack' | 'company-child' | 'community'
+    }[]
+  }
+}
+
+interface CompanyPackConfirmResponse {
+  readonly ok: true
+  readonly packEnabled: boolean
+  readonly communityInstalled: readonly string[]
+}
+
+/** Read the Company Pack confirm-to-install plan. Nothing installs here. */
+export async function readCompanyPackPreview(
+  signal?: AbortSignal,
+): Promise<CompanyPackPreviewResponse> {
+  return await readJson(await fetch('/api/desktop/company-pack', {
+    cache: 'no-store',
+    ...(signal === undefined ? {} : { signal }),
+  }))
+}
+
+/**
+ * Confirm Company Pack enablement on the Host.
+ * Pass exact communityTargets when a company pins SemVer; otherwise enable the
+ * pack alone and install community recommendations through the market path.
+ */
+export async function confirmCompanyPackInstall(
+  communityTargets: readonly { readonly packageName: string; readonly packageVersion: string }[] = [],
+  signal?: AbortSignal,
+): Promise<CompanyPackConfirmResponse> {
+  return await readJson(await fetch('/api/desktop/company-pack/confirm', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ confirmed: true, communityTargets }),
+    ...(signal === undefined ? {} : { signal }),
+  }))
+}
+
+/**
+ * User-confirmed Company Pack install: enable the bundled pack, then cascade
+ * community recommendations through the managed market path (serial installs).
+ */
+export async function installCompanyPackWithCascade(
+  signal?: AbortSignal,
+): Promise<{
+  readonly packEnabled: boolean
+  readonly results: readonly WorkerPackInstallResult[]
+  readonly restartToken?: string
+}> {
+  const preview = await readCompanyPackPreview(signal)
+  if (!preview.enabled) {
+    await confirmCompanyPackInstall([], signal)
+  }
+  const communityNames = preview.plan.entries
+    .filter(entry => entry.kind === 'community')
+    .map(entry => entry.packageName)
+  if (communityNames.length === 0) {
+    return {
+      packEnabled: true,
+      results: [{ packageName: preview.packageName, status: 'installed' }],
+    }
+  }
+  const outcome = await installRecommendedPlugins(communityNames, signal)
+  return {
+    packEnabled: true,
+    results: [
+      { packageName: preview.packageName, status: preview.enabled ? 'already' : 'installed' },
+      ...outcome.results,
+    ],
+    ...(outcome.restartToken === undefined ? {} : { restartToken: outcome.restartToken }),
+  }
+}
