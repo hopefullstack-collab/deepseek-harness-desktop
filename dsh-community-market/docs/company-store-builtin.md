@@ -13,11 +13,16 @@ See also README.md / docs/market-shell.md after local doc sync, and PR https://g
 
 ## Endpoint constants
 
-Keep `COMPANY_STORE_ENDPOINT` / `COMPANY_STORE_HOSTNAME` on the placeholder until a
-**durable** public HTTPS Store origin exists. Do **not** pin them to an ephemeral
-`*.trycloudflare.com` quick tunnel. Swap steps, verification curls, and the
-Actions-enablement note live in
-[`company-store-endpoint-swap.md`](./company-store-endpoint-swap.md) and
+Keep committed `COMPANY_STORE_*` on the placeholder until a **durable** public
+HTTPS Store origin exists. Do **not** pin them to an ephemeral
+`*.trycloudflare.com` quick tunnel or commit `http://127.0.0.1`.
+
+For **local** Market e2e only, set `DSH_COMPANY_STORE_LOCAL_ENDPOINT=1` on the
+host process (points at `http://127.0.0.1:8787`); unset for normal runs. This
+does not change default-selection rules and does not complete M1.
+
+Swap steps, local override, verification curls, and the Actions-enablement note
+live in [`company-store-endpoint-swap.md`](./company-store-endpoint-swap.md) and
 [`company-store-ci-note.md`](./company-store-ci-note.md).
 
 ## README / market-shell

@@ -4,6 +4,7 @@ Built-in constants live in `src/adapters/company-store.ts`:
 
 - `COMPANY_STORE_ENDPOINT` — full plugins list URL
 - `COMPANY_STORE_HOSTNAME` — host allow-list for the restricted HTTP client
+- `COMPANY_STORE_LOCAL_DEV` — `true` only when the local-dev env override is set
 
 Also wired through `src/catalog/built-in-providers.ts` and
 `src/host/company-store-http.ts`.
@@ -13,15 +14,53 @@ Also wired through `src/catalog/built-in-providers.ts` and
 ```text
 COMPANY_STORE_ENDPOINT = https://plugins.company.example/api/v1/plugins
 COMPANY_STORE_HOSTNAME = plugins.company.example
+COMPANY_STORE_LOCAL_DEV = false   # when env unset
 ```
 
-Do **not** change these to a `*.trycloudflare.com` quick-tunnel URL. Those
-hostnames are ephemeral (die with the tunnel process) and must not ship in the
-built-in.
+Do **not** change these committed defaults to a `*.trycloudflare.com` quick-tunnel
+URL or to `http://127.0.0.1`. Ephemeral / loopback hosts must not ship as the
+production built-in pin.
 
-## When to swap
+## Local development override (dev-only — not M1)
 
-Swap only after a **durable** public HTTPS origin exists:
+For local Market e2e against Store `wrangler dev --local` on `:8787`, set an
+**environment variable on the Market host process** (do not edit and commit
+constants):
+
+```bash
+# Store (separate terminal)
+npm run smoke:company-plugins-api
+# or: npx wrangler dev --local --port 8787  (from apps/web after build)
+
+# Desktop / Market host
+export DSH_COMPANY_STORE_LOCAL_ENDPOINT=1
+# equivalent explicit URL:
+# export DSH_COMPANY_STORE_LOCAL_ENDPOINT=http://127.0.0.1:8787/api/v1/plugins
+```
+
+Effects when set:
+
+- `COMPANY_STORE_ENDPOINT` → `http://127.0.0.1:8787/api/v1/plugins` (or your URL)
+- `COMPANY_STORE_HOSTNAME` → `127.0.0.1`
+- HTTP client switches to a **loopback-only** plain-HTTP path (restricted HTTPS
+  client still blocks loopback in the default path)
+
+Rules:
+
+| Rule | Required |
+| --- | --- |
+| Env unset | Placeholder HTTPS (production default) |
+| Allowed URL | `http://127.0.0.1` only (`1` / `true` → default `:8787`) |
+| Built-in selection | Still **not** default / not preferred / not fallback |
+| Commit | Never commit localhost into `company-store.ts` constants |
+| M1 gate | Localhost does **not** complete durable public HTTPS |
+
+Unset the env for normal runs. Store-side laptop deploy + HTTPS verify:
+`awesome-deepseek-harness-plugins` → `docs/company-fork-deploy.md` § Local-first.
+
+## When to swap (production pin)
+
+Swap committed constants only after a **durable** public HTTPS origin exists:
 
 1. Company Cloudflare Worker on a real apex (preferred), **or**
 2. A stable `https://company-store.<account>.workers.dev` Worker kept as the
@@ -40,11 +79,12 @@ Store-side checklist + secrets-gated deploy (sibling repo):
    curl -sS 'https://<apex>/api/v1/plugins?limit=1' | jq 'keys, (.packages|length), .meta'
    ```
 
-2. Edit `src/adapters/company-store.ts`:
+2. Edit `src/adapters/company-store.ts` placeholder constants (or the values
+   returned when `DSH_COMPANY_STORE_LOCAL_ENDPOINT` is unset):
 
    ```ts
-   export const COMPANY_STORE_ENDPOINT = 'https://<apex>/api/v1/plugins'
-   export const COMPANY_STORE_HOSTNAME = '<apex-host>'
+   export const COMPANY_STORE_PLACEHOLDER_ENDPOINT = 'https://<apex>/api/v1/plugins'
+   export const COMPANY_STORE_PLACEHOLDER_HOSTNAME = '<apex-host>'
    ```
 
 3. Refresh README / market-shell placeholder mentions (edit templates used by

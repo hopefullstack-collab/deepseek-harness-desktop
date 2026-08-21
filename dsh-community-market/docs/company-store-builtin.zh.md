@@ -13,10 +13,15 @@ https://github.com/hopefullstack-collab/deepseek-harness-desktop/pull/19
 
 ## 端点常量
 
-在出现**持久**的公司公开 HTTPS Store 源之前，保持
-`COMPANY_STORE_ENDPOINT` / `COMPANY_STORE_HOSTNAME` 为占位值。
-**不要**把它钉到短暂的 `*.trycloudflare.com` 快速隧道。
-切换步骤与 Actions 启用说明见
+在出现**持久**的公司公开 HTTPS Store 源之前，保持已提交的
+`COMPANY_STORE_*` 为占位值。**不要**钉到短暂的 `*.trycloudflare.com`，也
+**不要**把 `http://127.0.0.1` 提交进常量。
+
+本地 Market 联调可在宿主进程设置 `DSH_COMPANY_STORE_LOCAL_ENDPOINT=1`
+（指向 `http://127.0.0.1:8787`）；正常运行请取消该环境变量。这不改变
+「非默认选中」规则，也不算完成 M1。
+
+切换步骤、本地覆盖与 Actions 启用说明见
 [`company-store-endpoint-swap.md`](./company-store-endpoint-swap.md)。
 
 ## README / market-shell
