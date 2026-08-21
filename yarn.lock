@@ -7409,6 +7409,7 @@ __metadata:
     "@types/react": "npm:^18"
     adm-zip: "npm:^0.6.0"
     dsh-community-market: "npm:0.1.0-dev.0"
+    dsh-plugin-company-example: "npm:0.1.0-dev.0"
     dsh-plugin-company-pack: "npm:0.1.0-dev.0"
     electron: "npm:43.4.0"
     electron-builder: "npm:26.15.7"

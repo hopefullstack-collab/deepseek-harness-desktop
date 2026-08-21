@@ -19,6 +19,8 @@ import { McpSettingsTab } from './McpSettingsTab.tsx'
 import { DESKTOP_MCP_SETTINGS_KEY, type DesktopMcpSettings } from '../mcp-settings.ts'
 import { DESKTOP_WORKBENCH_SETTINGS_KEY, type DesktopWorkbenchSettings } from '../workbench-settings.ts'
 import { installWorkerStyles } from './worker-styles.ts'
+import { CompanyExampleSection } from './CompanyExampleSection.tsx'
+import { readCompanyPackPreview } from './market-actions.ts'
 
 const DESKTOP_CLIENT_LOCALE_NS = 'dsh-desktop'
 
@@ -121,6 +123,29 @@ export function apply(ctx: ClientContext): void {
         workspaces: ctx.workspaces,
       }),
     }, CommandPalette))
+    // Company Pack child settings: standalone section after confirm-to-install only.
+    settingsCtx.effect(() => {
+      const controller = new AbortController()
+      let disposeSection: (() => void) | undefined
+      void readCompanyPackPreview(controller.signal).then(
+        (preview) => {
+          if (controller.signal.aborted || !preview.enabled || disposeSection !== undefined) return
+          const t = settingsCtx.locale.bind(DESKTOP_CLIENT_LOCALE_NS)
+          disposeSection = settingsCtx.slots.inject('settings.section', () => settingsCtx.slots.register({
+            name: 'settings.section',
+            id: 'company-example',
+            order: 90,
+            label: () => t('companyExampleNav'),
+            locale: DESKTOP_CLIENT_LOCALE_NS,
+          }, CompanyExampleSection))
+        },
+        () => undefined,
+      )
+      return () => {
+        controller.abort()
+        disposeSection?.()
+      }
+    }, 'dsh-plugin-desktop: company example settings when pack enabled')
   })
   if (environment.mode === 'advanced') applyAdvancedShell(ctx, environment)
 }

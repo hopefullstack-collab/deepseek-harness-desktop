@@ -2,7 +2,10 @@ import { defineConfig } from 'tsdown'
 
 export default defineConfig({
   name: 'dsh-plugin-company-example',
-  entry: { index: 'src/index.ts' },
+  entry: {
+    index: 'src/index.ts',
+    identity: 'src/identity.ts',
+  },
   outDir: 'lib',
   format: 'esm',
   platform: 'node',

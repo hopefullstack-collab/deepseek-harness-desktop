@@ -12,6 +12,10 @@
       "types": "./lib/types/index.d.ts",
       "default": "./lib/index.js"
     },
+    "./identity": {
+      "types": "./lib/types/identity.d.ts",
+      "default": "./lib/identity.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
