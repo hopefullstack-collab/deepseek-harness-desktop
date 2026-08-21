@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import type { SettingsScope } from '@deepseek-ai/dsh-client-runtime/client'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import { DESKTOP_WORKBENCH_PAGE_IDS } from '../worker-pack.ts'
 import type { DesktopWorkbenchSettings } from '../workbench-settings.ts'
 import type { DesktopLocaleKey } from './locales.ts'
@@ -13,11 +13,10 @@ export interface DesktopWorkbenchHubInjected {
   readonly scope: SettingsScope<DesktopWorkbenchSettings>
 }
 
-export type DesktopWorkbenchHubProps = PropsRuntime<'settings.plugins.tab'>
-  & PropsLocale<'dsh-desktop'>
+export type DesktopWorkbenchHubProps = PropsLocale<'dsh-desktop'>
   & InjectFace<DesktopWorkbenchHubInjected>
 
-/** Pages kept under one Plugins tab so the official tab row stays readable. */
+/** Pages kept under Internal Market → 工作台 so official Plugins tabs stay readable. */
 export type DesktopWorkbenchPage = typeof DESKTOP_WORKBENCH_PAGE_IDS[number]
 
 const PAGES: readonly { readonly id: DesktopWorkbenchPage; readonly label: DesktopLocaleKey }[] = [

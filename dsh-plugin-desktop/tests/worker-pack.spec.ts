@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest'
 import { en, zh } from '../src/client/locales.ts'
 import {
   DESKTOP_DEFAULT_AGENT_PRESET,
-  DESKTOP_INTERNAL_MARKET_TAB_ID,
-  DESKTOP_PLUGIN_SETTINGS_TAB_IDS,
+  DESKTOP_INTERNAL_MARKET_PAGE_IDS,
+  DESKTOP_INTERNAL_MARKET_SECTION_ID,
   DESKTOP_WORKBENCH_PAGE_IDS,
   desktopAgentPresetConfig,
   findCatalogItemForPackage,
@@ -64,6 +64,8 @@ describe('desktop worker pack', () => {
   it('keeps worker-pack locale keys aligned', () => {
     expect(Object.keys(en).sort()).toEqual(Object.keys(zh).sort())
     expect(zh.internalMarketTab).toBe('内部市场')
+    expect(zh.featuredTab).toBe('精选')
+    expect(zh.workbenchTab).toBe('工作台')
     expect(zh.internalMarketBody).toContain('不是独家')
     expect(zh.internalMarketBody).toContain('插件市场')
     expect(zh.internalMarketBody).toContain('不会开机自动装')
@@ -72,6 +74,8 @@ describe('desktop worker pack', () => {
     expect(zh.workerBody).toContain('内部市场')
     expect(zh.installWorkspace).toContain('一键安装')
     expect(en.internalMarketTab).toBe('Internal Market')
+    expect(en.featuredTab).toBe('Featured')
+    expect(en.workbenchTab).toBe('Workbench')
     expect(en.internalMarketBody).toContain('not an exclusive')
     expect(en.internalMarketBody).toContain('Plugin market')
     expect(en.internalMarketBody).toContain('nothing installs at launch')
@@ -81,13 +85,9 @@ describe('desktop worker pack', () => {
     expect(en.installWorkspace).toContain('Install recommended workspace')
   })
 
-  it('keeps desktop workbench pages off the official Plugins tab row', () => {
-    expect(DESKTOP_INTERNAL_MARKET_TAB_ID).toBe('desktop-internal-market')
-    expect(DESKTOP_PLUGIN_SETTINGS_TAB_IDS).toEqual([
-      'desktop-worker-pack',
-      'desktop-internal-market',
-      'desktop-mcp',
-    ])
+  it('registers Internal Market as one settings section with inner pages', () => {
+    expect(DESKTOP_INTERNAL_MARKET_SECTION_ID).toBe('desktop-internal-market')
+    expect(DESKTOP_INTERNAL_MARKET_PAGE_IDS).toEqual(['featured', 'workbench', 'mcp'])
     expect(DESKTOP_WORKBENCH_PAGE_IDS).toEqual(['models', 'home', 'remote'])
   })
 
@@ -96,6 +96,7 @@ describe('desktop worker pack', () => {
     const pack = readFileSync(new URL('../src/client/WorkerPackTab.tsx', import.meta.url), 'utf8')
     const hub = readFileSync(new URL('../src/client/DesktopWorkbenchHub.tsx', import.meta.url), 'utf8')
     const client = readFileSync(new URL('../src/client/index.ts', import.meta.url), 'utf8')
+    const section = readFileSync(new URL('../src/client/DesktopSettingsSection.tsx', import.meta.url), 'utf8')
     expect(market).toContain('installRecommendedPlugins')
     expect(market).toContain('WORKER_PACK_RECOMMENDED_PLUGINS')
     expect(market).toContain('OFFICE_IM_RECOMMENDED_PLUGINS')
@@ -104,8 +105,17 @@ describe('desktop worker pack', () => {
     expect(pack).not.toContain('WORKER_PACK_RECOMMENDED_PLUGINS')
     expect(hub).not.toContain('installRecommendedPlugins')
     expect(hub).not.toMatch(/page === 'pack'/)
-    expect(client).toContain('DESKTOP_INTERNAL_MARKET_TAB_ID')
-    expect(client).toContain('InternalMarketTab')
+    expect(section).toContain('dshWorkerSubnav')
+    expect(section).toContain("id: 'featured'")
+    expect(section).toContain("id: 'workbench'")
+    expect(section).toContain("id: 'mcp'")
+    expect(section).not.toContain("role=\"tablist\"")
+    expect(client).toContain('DESKTOP_INTERNAL_MARKET_SECTION_ID')
+    expect(client).toContain("name: 'settings.section'")
+    expect(client).toContain('DesktopSettingsSection')
+    expect(client).not.toContain('settings.plugins.tab')
+    expect(client).not.toContain('desktop-worker-pack')
+    expect(client).not.toContain("id: 'desktop-mcp'")
     expect(client).not.toMatch(/id: ['"]community-market['"]/)
   })
 

@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import {
   OFFICE_IM_RECOMMENDED_PLUGINS,
   WORKBENCH_LATER_RECOMMENDED_PLUGINS,
@@ -20,8 +20,7 @@ import {
   workerPackCatalogSelected,
 } from './market-actions.ts'
 
-export type InternalMarketTabProps = PropsRuntime<'settings.plugins.tab'>
-  & PropsLocale<'dsh-desktop'>
+export type InternalMarketTabProps = PropsLocale<'dsh-desktop'>
 
 const ROLE_KEY: Record<WorkerPackRecommendedPlugin['role'], DesktopLocaleKey> = {
   'workspace-shell': 'pluginWorkspaceShell',

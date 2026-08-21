@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react'
-import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 
-export type WorkerPackTabProps = PropsRuntime<'settings.plugins.tab'>
-  & PropsLocale<'dsh-desktop'>
+export type WorkerPackTabProps = PropsLocale<'dsh-desktop'>
 
 /** Non-market workbench intro. Recommended plugins live on Internal Market. */
 export function WorkerPackTab({ t }: Pick<WorkerPackTabProps, 't'>): ReactNode {

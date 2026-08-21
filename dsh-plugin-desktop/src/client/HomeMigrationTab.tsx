@@ -1,6 +1,6 @@
 import { useState, useSyncExternalStore, type ReactNode } from 'react'
 import type { SettingsScope } from '@deepseek-ai/dsh-client-runtime/client'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { DesktopWorkbenchSettings } from '../workbench-settings.ts'
 import {
   applyHomeMigrationSource,
@@ -12,8 +12,7 @@ export interface HomeMigrationTabInjected {
   readonly scope: SettingsScope<DesktopWorkbenchSettings>
 }
 
-export type HomeMigrationTabProps = PropsRuntime<'settings.plugins.tab'>
-  & PropsLocale<'dsh-desktop'>
+export type HomeMigrationTabProps = PropsLocale<'dsh-desktop'>
   & InjectFace<HomeMigrationTabInjected>
 
 export function HomeMigrationTab({ scope, t }: Pick<HomeMigrationTabProps, 'scope' | 't'>): ReactNode {

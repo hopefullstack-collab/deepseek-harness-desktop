@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
 import type { SettingsScope } from '@deepseek-ai/dsh-client-runtime/client'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import { parseDesktopRemoteSettings, type DesktopWorkbenchSettings } from '../workbench-settings.ts'
 import { readRemoteStatus, type RemoteStatusView } from './workbench-actions.ts'
 
@@ -8,8 +8,7 @@ export interface RemoteAccessTabInjected {
   readonly scope: SettingsScope<DesktopWorkbenchSettings>
 }
 
-export type RemoteAccessTabProps = PropsRuntime<'settings.plugins.tab'>
-  & PropsLocale<'dsh-desktop'>
+export type RemoteAccessTabProps = PropsLocale<'dsh-desktop'>
   & InjectFace<RemoteAccessTabInjected>
 
 export function RemoteAccessTab({ scope, t }: Pick<RemoteAccessTabProps, 'scope' | 't'>): ReactNode {
