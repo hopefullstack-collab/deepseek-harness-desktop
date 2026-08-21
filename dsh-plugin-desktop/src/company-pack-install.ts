@@ -98,7 +98,9 @@ export function apply(ctx: Context): void {
   let packLoaded = false
   const loadPackIfEnabled = (): void => {
     if (packLoaded || !readCompanyPackOptIn(home)) return
-    ctx.plugin(companyPack)
+    // Company Pack shares the Desktop Cordis release; boundary cast for ctx.plugin.
+    const plugin = companyPack as unknown as Parameters<Context['plugin']>[0]
+    ctx.plugin(plugin, undefined as never)
     packLoaded = true
   }
   loadPackIfEnabled()
