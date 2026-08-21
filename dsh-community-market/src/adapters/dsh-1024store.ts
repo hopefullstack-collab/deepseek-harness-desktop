@@ -406,8 +406,14 @@ function buildCatalogScanSnapshots(
     ? new Date(generatedAt).toISOString()
     : undefined
   const providerRevision = plainText(meta.revision, 160, '') || undefined
-  const total = providerTotal(meta, raw.packages.length) ?? items.length
-  if (total !== items.length) throw new Error('1024Store scan did not reach the provider total')
+  // 1024Store now advertises the full catalog (thousands of packages) while
+  // returning only a capped first page. Refusing that page made every Host
+  // catalog scan — including worker-pack one-click install — return 502.
+  // Index the received page and report that count as the scan total.
+  const advertisedTotal = providerTotal(meta, raw.packages.length)
+  const total = advertisedTotal !== undefined && advertisedTotal !== items.length
+    ? items.length
+    : advertisedTotal ?? items.length
   const fetchedAt = new Date().toISOString()
   const snapshots: CatalogSnapshot[] = []
   for (let offset = 0; offset < items.length; offset += 100) {
