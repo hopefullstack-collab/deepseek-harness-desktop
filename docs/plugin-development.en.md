@@ -125,6 +125,16 @@ At minimum, a plugin should cover:
 
 Read the [architecture](architecture.en.md) next, then use the package-level [service contract](../dsh-plugin-desktop/docs/plugin-services.md) as the API reference.
 
+## Optional: Example Company plugin
+
+Company example capabilities live in the standalone repository [`dsh-plugin-company-example`](https://github.com/hopefullstack-collab/dsh-plugin-company-example). They are **not** default-inserted in this repository's `cordis.patch.yml`. Install explicitly on standard DSH Desktop:
+
+```sh
+dsh plugin --profile desktop add dsh-plugin-company-example
+```
+
+After install and restart, **Settings → Example Company** exposes Built-in / Enterprise / Featured tabs. Enterprise and Featured installs go through the built-in **Plugin market** (`dsh-community-market`) and do not depend on product-private `/api/desktop/*` routes.
+
 ## Ecosystem vision: keep the plugin ecosystem composable
 
 The DSH plugin ecosystem is growing quickly. The more plugins there are, the more their ability to work together matters — if every plugin assumes or overrides another plugin's internals, installing a few plugins starts to conflict and the ecosystem fragments.
