@@ -1,14 +1,16 @@
+/**
+ * Featured / curated page inside Example Company settings.
+ */
+
 import { useEffect, useState, type ReactNode } from 'react'
-import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import {
+  COMPANY_PACK_RECOMMENDED_COMMUNITY_PLUGINS,
   OFFICE_IM_RECOMMENDED_PLUGINS,
   WORKBENCH_LATER_RECOMMENDED_PLUGINS,
-  WORKER_PACK_RECOMMENDED_PLUGINS,
   recommendedPackageInstalled,
   recommendedPluginsFor,
   summarizeWorkerPackInstallResults,
   type WorkerPackInstallKind,
-  type WorkerPackRecommendedPlugin,
 } from '../worker-pack.ts'
 import type { DesktopLocaleKey } from './locales.ts'
 import {
@@ -19,53 +21,7 @@ import {
   selectWorkerPackCatalog,
   workerPackCatalogSelected,
 } from './market-actions.ts'
-
-export type InternalMarketTabProps = PropsRuntime<'settings.plugins.tab'>
-  & PropsLocale<'dsh-desktop'>
-
-const ROLE_KEY: Record<WorkerPackRecommendedPlugin['role'], DesktopLocaleKey> = {
-  'workspace-shell': 'pluginWorkspaceShell',
-  'workspace-context': 'pluginWorkspaceContext',
-  'workspace-mobile': 'pluginWorkspaceMobile',
-  'office-dingtalk': 'pluginOfficeDingtalk',
-  'office-wecom': 'pluginOfficeWecom',
-}
-
-function RecommendedPluginCard({
-  plugin,
-  t,
-  installed,
-  busy,
-  onInstall,
-}: {
-  readonly plugin: WorkerPackRecommendedPlugin
-  readonly t: InternalMarketTabProps['t']
-  readonly installed: boolean
-  readonly busy: boolean
-  readonly onInstall: (packageName: string) => void
-}): ReactNode {
-  return (
-    <article className="dshWorkerCard">
-      <h3>{plugin.displayName}</h3>
-      <p>{t(ROLE_KEY[plugin.role])}</p>
-      <div className="dshWorkerMeta">
-        <span>{t('pluginPackage')}</span>
-        <code className="dshWorkerCode">{plugin.packageName}</code>
-        <a href={plugin.repositoryUrl} target="_blank" rel="noreferrer">{t('openRepository')}</a>
-      </div>
-      <div className="dshWorkerActions">
-        <button
-          type="button"
-          className="dshWorkerButton dshWorkerButtonSecondary"
-          disabled={busy || installed}
-          onClick={() => onInstall(plugin.packageName)}
-        >
-          {installed ? t('installed') : t('installPlugin')}
-        </button>
-      </div>
-    </article>
-  )
-}
+import { RecommendedPluginCard } from './RecommendedPluginCard.tsx'
 
 type CatalogState =
   | { readonly status: 'loading' }
@@ -78,33 +34,12 @@ type InstallState =
   | { readonly status: 'busy' }
   | { readonly status: 'done'; readonly tone: 'ok' | 'error'; readonly message: DesktopLocaleKey; readonly restartToken?: string }
 
-/** Four-way move glyph matching official settings-tab chrome, without primitives. */
-function InternalMarketGlyph(): ReactNode {
-  return (
-    <svg
-      className="dshInternalMarketGlyph"
-      viewBox="0 0 24 24"
-      width="16"
-      height="16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="5 9 2 12 5 15" />
-      <polyline points="9 5 12 2 15 5" />
-      <polyline points="15 9 18 12 15 15" />
-      <polyline points="9 15 12 18 15 15" />
-      <line x1="2" y1="12" x2="22" y2="12" />
-      <line x1="12" y1="2" x2="12" y2="22" />
-    </svg>
-  )
-}
-
-/** Desktop-owned curated recommendations. Community market stays the open store. */
-export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
+/** Curated community picks — lives under Example Company → Featured. */
+export function CompanyCuratedPage({
+  t,
+}: {
+  readonly t: (key: DesktopLocaleKey) => string
+}): ReactNode {
   const [catalog, setCatalog] = useState<CatalogState>({ status: 'loading' })
   const [installedNames, setInstalledNames] = useState<readonly string[]>([])
   const [install, setInstall] = useState<InstallState>({ status: 'idle' })
@@ -112,7 +47,7 @@ export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
   const refreshInstallations = async (signal?: AbortSignal): Promise<void> => {
     const installations = await readWorkerPackInstallations(signal)
     setInstalledNames([
-      ...WORKER_PACK_RECOMMENDED_PLUGINS,
+      ...COMPANY_PACK_RECOMMENDED_COMMUNITY_PLUGINS,
       ...WORKBENCH_LATER_RECOMMENDED_PLUGINS,
       ...OFFICE_IM_RECOMMENDED_PLUGINS,
     ].filter(plugin => recommendedPackageInstalled(plugin.packageName, installations)).map(plugin => plugin.packageName))
@@ -169,16 +104,7 @@ export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
   const isInstalled = (packageName: string): boolean => installedNames.includes(packageName)
 
   return (
-    <section className="dshWorkerRoot dshInternalMarketRoot" aria-label={t('internalMarketTitle')}>
-      <header className="dshInternalMarketHeader">
-        <div className="dshInternalMarketGlyphWrap">
-          <InternalMarketGlyph />
-        </div>
-        <div className="dshInternalMarketHeaderTitle">
-          <h2>{t('internalMarketTitle')}</h2>
-          <p>{t('internalMarketBody')}</p>
-        </div>
-      </header>
+    <div className="dshWorkerRoot dshCompanyExamplePage" aria-label={t('curatedTitle')}>
       <div className="dshWorkerSection">
         <h2>{t('pluginsTitle')}</h2>
         <p>{t('pluginsBody')}</p>
@@ -186,13 +112,13 @@ export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
           <button
             type="button"
             className="dshWorkerButton"
-            disabled={busy || WORKER_PACK_RECOMMENDED_PLUGINS.every(plugin => isInstalled(plugin.packageName))}
-            onClick={() => installKind('workspace')}
+            disabled={busy || COMPANY_PACK_RECOMMENDED_COMMUNITY_PLUGINS.every(plugin => isInstalled(plugin.packageName))}
+            onClick={() => installKind('company-pack')}
           >
             {t('installWorkspace')}
           </button>
         </div>
-        {WORKER_PACK_RECOMMENDED_PLUGINS.map(plugin => (
+        {COMPANY_PACK_RECOMMENDED_COMMUNITY_PLUGINS.map(plugin => (
           <RecommendedPluginCard
             key={plugin.packageName}
             plugin={plugin}
@@ -287,6 +213,6 @@ export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
           ? <p className="dshWorkerStatus" data-tone="ok">{t('catalogReady')}</p>
           : null}
       </div>
-    </section>
+    </div>
   )
 }

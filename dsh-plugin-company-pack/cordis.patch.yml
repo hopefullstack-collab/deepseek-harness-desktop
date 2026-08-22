@@ -1,0 +1,7 @@
+# Optional Company Pack: inserts the umbrella Host row and company children.
+# Desktop does not default-insert this pack into cordis.patch.yml — opt-in only.
+- insert:
+    - id: company-pack
+      name: dsh-plugin-company-pack
+    - id: company-example
+      name: dsh-plugin-company-example

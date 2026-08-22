@@ -2,10 +2,17 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { en, zh } from '../src/client/locales.ts'
 import {
+  COMPANY_EXAMPLE_SETTINGS_SECTION_ID,
+  COMPANY_PACK_PACKAGE_NAME,
+  COMPANY_PACK_RECOMMENDED_ENTRY,
+  DESKTOP_BUILTIN_PLUGINS_TAB_ID,
+  DESKTOP_CURATED_PLUGINS_TAB_ID,
   DESKTOP_DEFAULT_AGENT_PRESET,
+  DESKTOP_ENTERPRISE_PLUGINS_TAB_ID,
   DESKTOP_INTERNAL_MARKET_TAB_ID,
   DESKTOP_PLUGIN_SETTINGS_TAB_IDS,
   DESKTOP_WORKBENCH_PAGE_IDS,
+  buildCompanyPackInstallPlan,
   desktopAgentPresetConfig,
   findCatalogItemForPackage,
   isWorkerPackRecommendedPackage,
@@ -40,6 +47,19 @@ describe('desktop worker pack', () => {
     ])
   })
 
+  it('exposes the optional Company Pack on Internal Market without silent install', () => {
+    expect(COMPANY_PACK_RECOMMENDED_ENTRY.packageName).toBe(COMPANY_PACK_PACKAGE_NAME)
+    expect(COMPANY_PACK_RECOMMENDED_ENTRY.role).toBe('company-pack')
+    const plan = buildCompanyPackInstallPlan()
+    expect(plan.entries[0]?.kind).toBe('pack')
+    expect(plan.companyChildren.length).toBeGreaterThan(0)
+    expect(plan.communityRecommendations.length).toBeGreaterThan(0)
+    expect(recommendedPluginsFor('company-pack').map(plugin => plugin.packageName)).toEqual([
+      'dsh-better-sidebar',
+      'dsh-context',
+    ])
+  })
+
   it('starts office IM from official DingTalk Stream and WeCom without gating community installs', () => {
     expect(OFFICE_IM_RECOMMENDED_PLUGINS.map(plugin => plugin.packageName)).toEqual([
       'dsh-dingtalk-channel',
@@ -63,50 +83,84 @@ describe('desktop worker pack', () => {
 
   it('keeps worker-pack locale keys aligned', () => {
     expect(Object.keys(en).sort()).toEqual(Object.keys(zh).sort())
-    expect(zh.internalMarketTab).toBe('内部市场')
-    expect(zh.internalMarketBody).toContain('不是独家')
-    expect(zh.internalMarketBody).toContain('插件市场')
-    expect(zh.internalMarketBody).toContain('不会开机自动装')
+    expect(zh.builtinTab).toBe('内置')
+    expect(zh.companyExampleTabBuiltin).toBe('内置')
+    expect(zh.companyExampleTabEnterprise).toBe('企业内部')
+    expect(zh.companyExampleTabCurated).toBe('精选推荐')
+    expect(zh.companyExampleIntro).toContain('公司插件')
+    expect(zh.curatedBody).toContain('精选')
+    expect(zh.curatedBody).toContain('不会开机自动装')
+    expect(zh.enterpriseBody).toContain('公司')
+    expect(zh.companyPackBody).toContain('确认')
+    expect(zh.companyPackRecommendationsHint).toContain('精选推荐')
     expect(zh.officeImBody).toContain('不是白名单')
     expect(zh.officeImBody).toContain('社区插件')
-    expect(zh.workerBody).toContain('内部市场')
+    expect(zh.workerBody).toContain('Example Company')
     expect(zh.installWorkspace).toContain('一键安装')
-    expect(en.internalMarketTab).toBe('Internal Market')
-    expect(en.internalMarketBody).toContain('not an exclusive')
-    expect(en.internalMarketBody).toContain('Plugin market')
-    expect(en.internalMarketBody).toContain('nothing installs at launch')
+    expect(en.builtinTab).toBe('Built-in')
+    expect(en.companyExampleTabBuiltin).toBe('Built-in')
+    expect(en.companyExampleTabEnterprise).toBe('Enterprise')
+    expect(en.companyExampleTabCurated).toBe('Featured')
+    expect(en.companyExampleIntro).toContain('company plugin')
+    expect(en.curatedBody).toContain('Curated')
+    expect(en.curatedBody).toContain('Nothing installs at launch')
+    expect(en.companyPackBody).toContain('Confirming')
+    expect(en.companyPackBody).toContain('never silent-preinstalls')
+    expect(zh.companyPackBody).toContain('不会开机自动装')
+    expect(en.companyPackRecommendationsHint).toContain('Featured')
     expect(en.officeImBody).toContain('not an allowlist')
     expect(en.officeImBody).toContain('community')
-    expect(en.workerBody).toContain('Internal Market')
+    expect(en.workerBody).toContain('Example Company')
     expect(en.installWorkspace).toContain('Install recommended workspace')
   })
 
-  it('keeps desktop workbench pages off the official Plugins tab row', () => {
-    expect(DESKTOP_INTERNAL_MARKET_TAB_ID).toBe('desktop-internal-market')
+  it('keeps desktop workbench pages under the Built-in Plugins tab', () => {
+    expect(DESKTOP_BUILTIN_PLUGINS_TAB_ID).toBe('desktop-builtin')
+    expect(DESKTOP_ENTERPRISE_PLUGINS_TAB_ID).toBe('desktop-enterprise')
+    expect(DESKTOP_CURATED_PLUGINS_TAB_ID).toBe('desktop-curated')
+    expect(DESKTOP_INTERNAL_MARKET_TAB_ID).toBe(DESKTOP_CURATED_PLUGINS_TAB_ID)
     expect(DESKTOP_PLUGIN_SETTINGS_TAB_IDS).toEqual([
-      'desktop-worker-pack',
-      'desktop-internal-market',
-      'desktop-mcp',
+      'desktop-builtin',
     ])
-    expect(DESKTOP_WORKBENCH_PAGE_IDS).toEqual(['models', 'home', 'remote'])
+    expect(COMPANY_EXAMPLE_SETTINGS_SECTION_ID).toBe('company-example')
+    expect(DESKTOP_WORKBENCH_PAGE_IDS).toEqual(['models', 'home', 'remote', 'mcp'])
   })
 
-  it('owns recommended-plugin UI on Internal Market instead of the workbench hub', () => {
-    const market = readFileSync(new URL('../src/client/InternalMarketTab.tsx', import.meta.url), 'utf8')
+  it('hosts Built-in / Enterprise / Featured under Example Company settings', () => {
+    const company = readFileSync(new URL('../src/client/CompanyExampleSection.tsx', import.meta.url), 'utf8')
+    const enterprise = readFileSync(new URL('../src/client/CompanyEnterprisePage.tsx', import.meta.url), 'utf8')
+    const curated = readFileSync(new URL('../src/client/CompanyCuratedPage.tsx', import.meta.url), 'utf8')
     const pack = readFileSync(new URL('../src/client/WorkerPackTab.tsx', import.meta.url), 'utf8')
     const hub = readFileSync(new URL('../src/client/DesktopWorkbenchHub.tsx', import.meta.url), 'utf8')
     const client = readFileSync(new URL('../src/client/index.ts', import.meta.url), 'utf8')
-    expect(market).toContain('installRecommendedPlugins')
-    expect(market).toContain('WORKER_PACK_RECOMMENDED_PLUGINS')
-    expect(market).toContain('OFFICE_IM_RECOMMENDED_PLUGINS')
-    expect(market).toContain('WORKBENCH_LATER_RECOMMENDED_PLUGINS')
+    const patch = readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
+    expect(company).toContain('companyExampleTabBuiltin')
+    expect(company).toContain('companyExampleTabEnterprise')
+    expect(company).toContain('companyExampleTabCurated')
+    expect(company).toContain('CompanyEnterprisePage')
+    expect(company).toContain('CompanyCuratedPage')
+    expect(enterprise).toContain('installCompanyPackWithCascade')
+    expect(enterprise).toContain('COMPANY_PACK_RECOMMENDED_ENTRY')
+    expect(enterprise).not.toContain('OFFICE_IM_RECOMMENDED_PLUGINS')
+    expect(curated).toContain('installRecommendedPlugins')
+    expect(curated).toContain('COMPANY_PACK_RECOMMENDED_COMMUNITY_PLUGINS')
+    expect(curated).toContain('OFFICE_IM_RECOMMENDED_PLUGINS')
+    expect(curated).toContain('WORKBENCH_LATER_RECOMMENDED_PLUGINS')
     expect(pack).not.toContain('installRecommendedPlugins')
     expect(pack).not.toContain('WORKER_PACK_RECOMMENDED_PLUGINS')
+    expect(hub).toContain('McpSettingsTab')
     expect(hub).not.toContain('installRecommendedPlugins')
     expect(hub).not.toMatch(/page === 'pack'/)
-    expect(client).toContain('DESKTOP_INTERNAL_MARKET_TAB_ID')
-    expect(client).toContain('InternalMarketTab')
+    expect(client).toContain('DESKTOP_BUILTIN_PLUGINS_TAB_ID')
+    expect(client).toContain('CompanyExampleSection')
+    expect(client).toContain('COMPANY_EXAMPLE_SETTINGS_SECTION_ID')
+    expect(client).not.toContain('DESKTOP_ENTERPRISE_PLUGINS_TAB_ID')
+    expect(client).not.toContain('DESKTOP_CURATED_PLUGINS_TAB_ID')
+    expect(client).not.toContain('EnterprisePluginsTab')
+    expect(client).not.toContain('CuratedPluginsTab')
     expect(client).not.toMatch(/id: ['"]community-market['"]/)
+    expect(patch).toContain('dsh-plugin-desktop/company-pack-install')
+    expect(patch).not.toMatch(/name:\s*dsh-plugin-company-pack\b/u)
   })
 
   it('groups one-click packs without making them a silent boot list', () => {
@@ -122,6 +176,7 @@ describe('desktop worker pack', () => {
       'dsh-web-mobile',
     ])
     expect(isWorkerPackRecommendedPackage('dsh-better-sidebar')).toBe(true)
+    expect(isWorkerPackRecommendedPackage('dsh-plugin-company-pack')).toBe(true)
     expect(isWorkerPackRecommendedPackage('dsh-im')).toBe(false)
   })
 

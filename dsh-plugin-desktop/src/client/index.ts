@@ -11,11 +11,13 @@ import { installDesktopDirectoryPickerBridge, requestDesktopDirectoryValidation 
 import { parseDesktopClientEnvironment } from './environment.ts'
 import { installWorkspaceFolderDrop } from './workspace-folder-drop.ts'
 import { en, zh, type DesktopLocaleKey } from './locales.ts'
-import { DESKTOP_INTERNAL_MARKET_TAB_ID } from '../worker-pack.ts'
+import {
+  COMPANY_EXAMPLE_SETTINGS_SECTION_ID,
+  DESKTOP_BUILTIN_PLUGINS_TAB_ID,
+} from '../worker-pack.ts'
 import { CommandPalette } from './CommandPalette.tsx'
+import { CompanyExampleSection } from './CompanyExampleSection.tsx'
 import { DesktopWorkbenchHub } from './DesktopWorkbenchHub.tsx'
-import { InternalMarketTab } from './InternalMarketTab.tsx'
-import { McpSettingsTab } from './McpSettingsTab.tsx'
 import { DESKTOP_MCP_SETTINGS_KEY, type DesktopMcpSettings } from '../mcp-settings.ts'
 import { DESKTOP_WORKBENCH_SETTINGS_KEY, type DesktopWorkbenchSettings } from '../workbench-settings.ts'
 import { installWorkerStyles } from './worker-styles.ts'
@@ -82,35 +84,19 @@ export function apply(ctx: ClientContext): void {
     )
     settingsCtx.slots.inject('settings.plugins.tab', () => settingsCtx.slots.register({
       name: 'settings.plugins.tab',
-      id: 'desktop-worker-pack',
+      id: DESKTOP_BUILTIN_PLUGINS_TAB_ID,
       order: 15,
-      label: () => settingsCtx.locale.bind(DESKTOP_CLIENT_LOCALE_NS)('workerTab'),
+      label: () => settingsCtx.locale.bind(DESKTOP_CLIENT_LOCALE_NS)('builtinTab'),
       locale: DESKTOP_CLIENT_LOCALE_NS,
       inject: () => ({
         scope: settingsCtx.settingsScope.bind<DesktopWorkbenchSettings>({
           namespace: DESKTOP_WORKBENCH_SETTINGS_KEY,
         }) as SettingsScope<DesktopWorkbenchSettings>,
-      }),
-    }, DesktopWorkbenchHub))
-    settingsCtx.slots.inject('settings.plugins.tab', () => settingsCtx.slots.register({
-      name: 'settings.plugins.tab',
-      id: DESKTOP_INTERNAL_MARKET_TAB_ID,
-      order: 18,
-      label: () => settingsCtx.locale.bind(DESKTOP_CLIENT_LOCALE_NS)('internalMarketTab'),
-      locale: DESKTOP_CLIENT_LOCALE_NS,
-    }, InternalMarketTab))
-    settingsCtx.slots.inject('settings.plugins.tab', () => settingsCtx.slots.register({
-      name: 'settings.plugins.tab',
-      id: 'desktop-mcp',
-      order: 30,
-      label: () => settingsCtx.locale.bind(DESKTOP_CLIENT_LOCALE_NS)('mcpTab'),
-      locale: DESKTOP_CLIENT_LOCALE_NS,
-      inject: () => ({
-        scope: settingsCtx.settingsScope.bind<DesktopMcpSettings>({
+        mcpScope: settingsCtx.settingsScope.bind<DesktopMcpSettings>({
           namespace: DESKTOP_MCP_SETTINGS_KEY,
         }) as SettingsScope<DesktopMcpSettings>,
       }),
-    }, McpSettingsTab))
+    }, DesktopWorkbenchHub))
     settingsCtx.slots.inject('shell.overlay', () => settingsCtx.slots.register({
       name: 'shell.overlay',
       id: 'desktop-command-palette',
@@ -121,6 +107,16 @@ export function apply(ctx: ClientContext): void {
         workspaces: ctx.workspaces,
       }),
     }, CommandPalette))
+    // Company plugin settings hub — always registered so Enterprise install is reachable.
+    // Built-in / Enterprise / Featured are inner pages of this section, not Plugins tabs.
+    const t = settingsCtx.locale.bind(DESKTOP_CLIENT_LOCALE_NS)
+    settingsCtx.slots.inject('settings.section', () => settingsCtx.slots.register({
+      name: 'settings.section',
+      id: COMPANY_EXAMPLE_SETTINGS_SECTION_ID,
+      order: 90,
+      label: () => t('companyExampleNav'),
+      locale: DESKTOP_CLIENT_LOCALE_NS,
+    }, CompanyExampleSection))
   })
   if (environment.mode === 'advanced') applyAdvancedShell(ctx, environment)
 }

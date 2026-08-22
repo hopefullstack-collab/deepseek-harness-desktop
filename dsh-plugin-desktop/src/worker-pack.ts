@@ -1,16 +1,28 @@
 /** Curated worker-pack metadata. Catalog listing is not a security review. */
 
+import {
+  COMPANY_PACK_COMMUNITY_RECOMMENDATIONS,
+  COMPANY_PACK_DISPLAY_NAME,
+  COMPANY_PACK_PACKAGE_NAME,
+  buildCompanyPackInstallPlan,
+  type CompanyPackInstallPlan,
+} from 'dsh-plugin-company-pack/manifest'
+
 /** Desktop-owned engineering default for new sessions that name no preset. */
 export const DESKTOP_DEFAULT_AGENT_PRESET = 'code'
 
 /** Built-in catalog key the worker pack can add when the user asks. */
 export const WORKER_PACK_CATALOG_SOURCE_KEY = 'dsh-1024store'
 
+/** Optional Company Pack package name surfaced on Internal Market. */
+export { COMPANY_PACK_PACKAGE_NAME, COMPANY_PACK_DISPLAY_NAME, buildCompanyPackInstallPlan }
+export type { CompanyPackInstallPlan }
+
 /** One community plugin the worker pack can point the market at. */
 export interface WorkerPackRecommendedPlugin {
   readonly packageName: string
   readonly displayName: string
-  readonly role: 'workspace-shell' | 'workspace-context' | 'workspace-mobile' | 'office-dingtalk' | 'office-wecom'
+  readonly role: 'workspace-shell' | 'workspace-context' | 'workspace-mobile' | 'office-dingtalk' | 'office-wecom' | 'company-pack'
   readonly repositoryUrl: string
 }
 
@@ -64,6 +76,27 @@ export const OFFICE_IM_RECOMMENDED_PLUGINS: readonly WorkerPackRecommendedPlugin
 ])
 
 /**
+ * Optional Company Pack entry for Internal Market.
+ * Ships in the app graph via desktop dependency; never silent-preinstalled.
+ */
+export const COMPANY_PACK_RECOMMENDED_ENTRY: WorkerPackRecommendedPlugin = Object.freeze({
+  packageName: COMPANY_PACK_PACKAGE_NAME,
+  displayName: COMPANY_PACK_DISPLAY_NAME,
+  role: 'company-pack',
+  repositoryUrl: 'https://github.com/hopefullstack-collab/deepseek-harness-desktop/tree/master/dsh-plugin-company-pack',
+})
+
+/** Community plugins the Company Pack cascades after confirm. */
+export const COMPANY_PACK_RECOMMENDED_COMMUNITY_PLUGINS: readonly WorkerPackRecommendedPlugin[] = Object.freeze(
+  COMPANY_PACK_COMMUNITY_RECOMMENDATIONS.map(plugin => ({
+    packageName: plugin.packageName,
+    displayName: plugin.displayName,
+    role: plugin.role,
+    repositoryUrl: plugin.repositoryUrl,
+  })),
+)
+
+/**
  * Overlay the desktop worker default onto an existing agent-presets config.
  * User settings still win at runtime through `agent-presets.default`.
  */
@@ -93,21 +126,37 @@ export function workerPackCatalogSelected(
   ))
 }
 
-/** Desktop-owned Internal Market tab. Sibling of Plugin Market, not a community package. */
-export const DESKTOP_INTERNAL_MARKET_TAB_ID = 'desktop-internal-market'
+/** Workbench pages that share the Built-in Plugins tab instead of adding more top tabs. */
+export const DESKTOP_WORKBENCH_PAGE_IDS = ['models', 'home', 'remote', 'mcp'] as const
+
+/** Desktop-owned Built-in Plugins tab (ships with the app). */
+export const DESKTOP_BUILTIN_PLUGINS_TAB_ID = 'desktop-builtin'
+
+/**
+ * @deprecated Enterprise UI lives under Example Company settings, not a Plugins tab.
+ * Kept for stable id references in older docs/tests.
+ */
+export const DESKTOP_ENTERPRISE_PLUGINS_TAB_ID = 'desktop-enterprise'
+
+/**
+ * @deprecated Featured UI lives under Example Company settings, not a Plugins tab.
+ * Kept for stable id references in older docs/tests.
+ */
+export const DESKTOP_CURATED_PLUGINS_TAB_ID = 'desktop-curated'
+
+/** @deprecated Use {@link DESKTOP_CURATED_PLUGINS_TAB_ID}. */
+export const DESKTOP_INTERNAL_MARKET_TAB_ID = DESKTOP_CURATED_PLUGINS_TAB_ID
 
 /** Top-level Plugins tabs registered by the desktop client. */
 export const DESKTOP_PLUGIN_SETTINGS_TAB_IDS = [
-  'desktop-worker-pack',
-  DESKTOP_INTERNAL_MARKET_TAB_ID,
-  'desktop-mcp',
+  DESKTOP_BUILTIN_PLUGINS_TAB_ID,
 ] as const
 
-/** Workbench pages that share the Worker pack tab instead of adding more top tabs. */
-export const DESKTOP_WORKBENCH_PAGE_IDS = ['models', 'home', 'remote'] as const
+/** Example Company settings.section id (Built-in / Enterprise / Featured hub). */
+export const COMPANY_EXAMPLE_SETTINGS_SECTION_ID = 'company-example'
 
 /** User-initiated install groups on the Internal Market tab. */
-export type WorkerPackInstallKind = 'workspace' | 'office-im' | 'later'
+export type WorkerPackInstallKind = 'workspace' | 'office-im' | 'later' | 'company-pack'
 
 /** One profile inventory row the worker pack can match by npm name. */
 export interface WorkerPackInstallationRef {
@@ -134,6 +183,8 @@ const ALL_RECOMMENDED_PLUGINS: readonly WorkerPackRecommendedPlugin[] = Object.f
   ...WORKER_PACK_RECOMMENDED_PLUGINS,
   ...WORKBENCH_LATER_RECOMMENDED_PLUGINS,
   ...OFFICE_IM_RECOMMENDED_PLUGINS,
+  COMPANY_PACK_RECOMMENDED_ENTRY,
+  ...COMPANY_PACK_RECOMMENDED_COMMUNITY_PLUGINS,
 ])
 
 /** Recommended plugins for one one-click button. Never a silent boot list. */
@@ -142,6 +193,7 @@ export function recommendedPluginsFor(
 ): readonly WorkerPackRecommendedPlugin[] {
   if (kind === 'workspace') return WORKER_PACK_RECOMMENDED_PLUGINS
   if (kind === 'office-im') return OFFICE_IM_RECOMMENDED_PLUGINS
+  if (kind === 'company-pack') return COMPANY_PACK_RECOMMENDED_COMMUNITY_PLUGINS
   return WORKBENCH_LATER_RECOMMENDED_PLUGINS
 }
 
