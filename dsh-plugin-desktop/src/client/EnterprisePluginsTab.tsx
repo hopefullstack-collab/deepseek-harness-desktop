@@ -1,3 +1,7 @@
+/**
+ * Enterprise (company-internal) Plugins tab: Company Pack confirm-to-install.
+ */
+
 import { useEffect, useState, type ReactNode } from 'react'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import {
@@ -9,20 +13,11 @@ import type { DesktopLocaleKey } from './locales.ts'
 import {
   installCompanyPackWithCascade,
   readCompanyPackPreview,
-  readMarketSources,
   requestWorkerPackRestart,
-  selectWorkerPackCatalog,
-  workerPackCatalogSelected,
 } from './market-actions.ts'
 
-export type InternalMarketTabProps = PropsRuntime<'settings.plugins.tab'>
+export type EnterprisePluginsTabProps = PropsRuntime<'settings.plugins.tab'>
   & PropsLocale<'dsh-desktop'>
-
-type CatalogState =
-  | { readonly status: 'loading' }
-  | { readonly status: 'ready'; readonly selected: boolean }
-  | { readonly status: 'busy' }
-  | { readonly status: 'error' }
 
 type InstallState =
   | { readonly status: 'idle' }
@@ -30,8 +25,8 @@ type InstallState =
   | { readonly status: 'confirm-company-pack'; readonly entries: readonly { readonly packageName: string; readonly displayName: string; readonly kind: string }[] }
   | { readonly status: 'done'; readonly tone: 'ok' | 'error'; readonly message: DesktopLocaleKey; readonly restartToken?: string }
 
-/** Four-way move glyph matching official settings-tab chrome, without primitives. */
-function InternalMarketGlyph(): ReactNode {
+/** Building / org glyph for the enterprise Plugins tab. */
+function EnterpriseGlyph(): ReactNode {
   return (
     <svg
       className="dshInternalMarketGlyph"
@@ -45,48 +40,26 @@ function InternalMarketGlyph(): ReactNode {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <polyline points="5 9 2 12 5 15" />
-      <polyline points="9 5 12 2 15 5" />
-      <polyline points="15 9 18 12 15 15" />
-      <polyline points="9 15 12 18 15 15" />
-      <line x1="2" y1="12" x2="22" y2="12" />
-      <line x1="12" y1="2" x2="12" y2="22" />
+      <rect x="4" y="3" width="16" height="18" rx="2" />
+      <path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1" />
+      <path d="M10 21v-4h4v4" />
     </svg>
   )
 }
 
-/**
- * Desktop-owned curated entry for Company Pack + catalog.
- * Workspace / office / later recommendations live on Example Company settings
- * after the pack is enabled.
- */
-export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
-  const [catalog, setCatalog] = useState<CatalogState>({ status: 'loading' })
+/** Company Pack and enterprise children — not the open community store. */
+export function EnterprisePluginsTab({ t }: EnterprisePluginsTabProps): ReactNode {
   const [companyPackEnabled, setCompanyPackEnabled] = useState(false)
   const [install, setInstall] = useState<InstallState>({ status: 'idle' })
 
   useEffect(() => {
     const controller = new AbortController()
-    void readMarketSources(controller.signal).then(
-      (sources) => {
-        setCatalog({ status: 'ready', selected: workerPackCatalogSelected(sources) })
-      },
-      () => { setCatalog({ status: 'error' }) },
-    )
     void readCompanyPackPreview(controller.signal).then(
       (preview) => { setCompanyPackEnabled(preview.enabled) },
       () => undefined,
     )
     return () => controller.abort()
   }, [])
-
-  const addCatalog = (): void => {
-    setCatalog({ status: 'busy' })
-    void selectWorkerPackCatalog().then(
-      (sources) => { setCatalog({ status: 'ready', selected: workerPackCatalogSelected(sources) }) },
-      () => { setCatalog({ status: 'error' }) },
-    )
-  }
 
   const beginCompanyPackConfirm = (): void => {
     setInstall({
@@ -98,9 +71,8 @@ export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
   const confirmCompanyPack = (): void => {
     setInstall({ status: 'busy' })
     void installCompanyPackWithCascade().then(
-      async (outcome) => {
+      (outcome) => {
         setCompanyPackEnabled(outcome.packEnabled)
-        setCatalog({ status: 'ready', selected: true })
         const message = summarizeWorkerPackInstallResults(outcome.results)
         setInstall({
           status: 'done',
@@ -118,17 +90,17 @@ export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
     void requestWorkerPackRestart(install.restartToken).catch(() => undefined)
   }
 
-  const busy = catalog.status === 'busy' || install.status === 'busy'
+  const busy = install.status === 'busy'
 
   return (
-    <section className="dshWorkerRoot dshInternalMarketRoot" aria-label={t('internalMarketTitle')}>
+    <section className="dshWorkerRoot dshInternalMarketRoot" aria-label={t('enterpriseTitle')}>
       <header className="dshInternalMarketHeader">
         <div className="dshInternalMarketGlyphWrap">
-          <InternalMarketGlyph />
+          <EnterpriseGlyph />
         </div>
         <div className="dshInternalMarketHeaderTitle">
-          <h2>{t('internalMarketTitle')}</h2>
-          <p>{t('internalMarketBody')}</p>
+          <h2>{t('enterpriseTitle')}</h2>
+          <p>{t('enterpriseBody')}</p>
         </div>
       </header>
       <div className="dshWorkerSection">
@@ -209,25 +181,6 @@ export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
             </div>
           )
         : null}
-      <div className="dshWorkerSection">
-        <h2>{t('catalogTitle')}</h2>
-        <p>{t('catalogBody')}</p>
-        <div className="dshWorkerActions">
-          <button
-            type="button"
-            className="dshWorkerButton"
-            disabled={catalog.status === 'busy' || (catalog.status === 'ready' && catalog.selected)}
-            onClick={addCatalog}
-          >
-            {t('addCatalog')}
-          </button>
-        </div>
-        {catalog.status === 'busy' ? <p className="dshWorkerStatus">{t('catalogBusy')}</p> : null}
-        {catalog.status === 'error' ? <p className="dshWorkerStatus" data-tone="error">{t('catalogError')}</p> : null}
-        {catalog.status === 'ready' && catalog.selected
-          ? <p className="dshWorkerStatus" data-tone="ok">{t('catalogReady')}</p>
-          : null}
-      </div>
     </section>
   )
 }

@@ -59,7 +59,7 @@ function uniqueServerName(base: string, servers: readonly DesktopMcpServerSettin
   return `${base}${createId().slice(0, 6)}`
 }
 
-export function McpSettingsTab({ scope, t }: McpSettingsTabProps): ReactNode {
+export function McpSettingsTab({ scope, t }: Pick<McpSettingsTabProps, 'scope' | 't'>): ReactNode {
   const snapshot = useSyncExternalStore(listener => scope.subscribe(listener), () => scope.getSnapshot())
   const remoteServers = snapshot.value?.servers ?? []
   const [draft, setDraft] = useState<DesktopMcpServerSettings[] | undefined>(undefined)

@@ -1,28 +1,11 @@
 /**
  * Standalone Example Company settings section.
- * Same chrome as community plugins: name + version badge + General group,
- * plus Company Pack recommended community plugins moved here from Internal Market.
+ * Identity chrome only; curated installs live under Plugins → 精选推荐.
  */
 
-import { useEffect, useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { EXAMPLE_COMPANY_IDENTITY } from 'dsh-plugin-company-example/identity'
-import {
-  COMPANY_PACK_RECOMMENDED_COMMUNITY_PLUGINS,
-  OFFICE_IM_RECOMMENDED_PLUGINS,
-  WORKBENCH_LATER_RECOMMENDED_PLUGINS,
-  recommendedPackageInstalled,
-  recommendedPluginsFor,
-  summarizeWorkerPackInstallResults,
-  type WorkerPackInstallKind,
-} from '../worker-pack.ts'
-import type { DesktopLocaleKey } from './locales.ts'
-import {
-  installRecommendedPlugins,
-  readWorkerPackInstallations,
-  requestWorkerPackRestart,
-} from './market-actions.ts'
-import { RecommendedPluginCard } from './RecommendedPluginCard.tsx'
 
 const PACKAGE_NAME = 'dsh-plugin-company-example'
 const PACKAGE_VERSION = '0.1.0-dev.0'
@@ -42,8 +25,6 @@ const SECTION_CSS = `
 .dshCompanyExampleTitle{color:var(--dsw-alias-label-primary);font-size:14px;line-height:22px}
 .dshCompanyExampleDesc{color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:18px}
 .dshCompanyExampleValue{color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;white-space:nowrap}
-.dshCompanyExampleRecs{flex-direction:column;gap:12px;display:flex}
-.dshCompanyExampleRecs .dshWorkerCard{margin:0}
 `
 
 function ensureStyles(): void {
@@ -59,61 +40,9 @@ function ensureStyles(): void {
 export type CompanyExampleSectionProps = PropsRuntime<'settings.section'>
   & PropsLocale<'dsh-desktop'>
 
-type InstallState =
-  | { readonly status: 'idle' }
-  | { readonly status: 'busy' }
-  | { readonly status: 'done'; readonly tone: 'ok' | 'error'; readonly message: DesktopLocaleKey; readonly restartToken?: string }
-
 /** Settings.section page shown after Company Pack opt-in. */
 export function CompanyExampleSection({ t }: CompanyExampleSectionProps): ReactNode {
   ensureStyles()
-  const [installedNames, setInstalledNames] = useState<readonly string[]>([])
-  const [install, setInstall] = useState<InstallState>({ status: 'idle' })
-
-  const refreshInstallations = async (signal?: AbortSignal): Promise<void> => {
-    const installations = await readWorkerPackInstallations(signal)
-    setInstalledNames([
-      ...COMPANY_PACK_RECOMMENDED_COMMUNITY_PLUGINS,
-      ...WORKBENCH_LATER_RECOMMENDED_PLUGINS,
-      ...OFFICE_IM_RECOMMENDED_PLUGINS,
-    ].filter(plugin => recommendedPackageInstalled(plugin.packageName, installations)).map(plugin => plugin.packageName))
-  }
-
-  useEffect(() => {
-    const controller = new AbortController()
-    void refreshInstallations(controller.signal).catch(() => undefined)
-    return () => controller.abort()
-  }, [])
-
-  const runInstall = (packageNames: readonly string[]): void => {
-    setInstall({ status: 'busy' })
-    void installRecommendedPlugins(packageNames).then(
-      async (outcome) => {
-        await refreshInstallations().catch(() => undefined)
-        const message = summarizeWorkerPackInstallResults(outcome.results)
-        setInstall({
-          status: 'done',
-          tone: message === 'installError' || message === 'installMissing' ? 'error' : 'ok',
-          message,
-          ...(outcome.restartToken === undefined ? {} : { restartToken: outcome.restartToken }),
-        })
-      },
-      () => { setInstall({ status: 'done', tone: 'error', message: 'installError' }) },
-    )
-  }
-
-  const installKind = (kind: WorkerPackInstallKind): void => {
-    runInstall(recommendedPluginsFor(kind).map(plugin => plugin.packageName))
-  }
-
-  const restartNow = (): void => {
-    if (install.status !== 'done' || install.restartToken === undefined) return
-    void requestWorkerPackRestart(install.restartToken).catch(() => undefined)
-  }
-
-  const busy = install.status === 'busy'
-  const isInstalled = (packageName: string): boolean => installedNames.includes(packageName)
-
   return (
     <div className="dshCompanyExampleSection">
       <p className="dshCompanyExampleIntro">{t('companyExampleIntro')}</p>
@@ -137,98 +66,6 @@ export function CompanyExampleSection({ t }: CompanyExampleSectionProps): ReactN
           </span>
           <span className="dshCompanyExampleValue">{t('companyExampleSsoIdle')}</span>
         </div>
-      </div>
-
-      <div className="dshCompanyExampleRecs">
-        <div className="dshWorkerSection">
-          <h2>{t('pluginsTitle')}</h2>
-          <p>{t('companyExamplePluginsBody')}</p>
-          <div className="dshWorkerActions">
-            <button
-              type="button"
-              className="dshWorkerButton"
-              disabled={busy || COMPANY_PACK_RECOMMENDED_COMMUNITY_PLUGINS.every(plugin => isInstalled(plugin.packageName))}
-              onClick={() => installKind('company-pack')}
-            >
-              {t('installWorkspace')}
-            </button>
-          </div>
-          {COMPANY_PACK_RECOMMENDED_COMMUNITY_PLUGINS.map(plugin => (
-            <RecommendedPluginCard
-              key={plugin.packageName}
-              plugin={plugin}
-              t={t}
-              installed={isInstalled(plugin.packageName)}
-              busy={busy}
-              onInstall={packageName => runInstall([packageName])}
-            />
-          ))}
-        </div>
-        <div className="dshWorkerSection">
-          <h2>{t('laterTitle')}</h2>
-          <p>{t('laterBody')}</p>
-          <div className="dshWorkerActions">
-            <button
-              type="button"
-              className="dshWorkerButton dshWorkerButtonSecondary"
-              disabled={busy || WORKBENCH_LATER_RECOMMENDED_PLUGINS.every(plugin => isInstalled(plugin.packageName))}
-              onClick={() => installKind('later')}
-            >
-              {t('installLater')}
-            </button>
-          </div>
-          {WORKBENCH_LATER_RECOMMENDED_PLUGINS.map(plugin => (
-            <RecommendedPluginCard
-              key={plugin.packageName}
-              plugin={plugin}
-              t={t}
-              installed={isInstalled(plugin.packageName)}
-              busy={busy}
-              onInstall={packageName => runInstall([packageName])}
-            />
-          ))}
-        </div>
-        <div className="dshWorkerSection">
-          <h2>{t('officeImTitle')}</h2>
-          <p>{t('officeImBody')}</p>
-          <div className="dshWorkerActions">
-            <button
-              type="button"
-              className="dshWorkerButton"
-              disabled={busy || OFFICE_IM_RECOMMENDED_PLUGINS.every(plugin => isInstalled(plugin.packageName))}
-              onClick={() => installKind('office-im')}
-            >
-              {t('installOfficeIm')}
-            </button>
-          </div>
-          {OFFICE_IM_RECOMMENDED_PLUGINS.map(plugin => (
-            <RecommendedPluginCard
-              key={plugin.packageName}
-              plugin={plugin}
-              t={t}
-              installed={isInstalled(plugin.packageName)}
-              busy={busy}
-              onInstall={packageName => runInstall([packageName])}
-            />
-          ))}
-        </div>
-        {install.status === 'busy' ? <p className="dshWorkerStatus">{t('installBusy')}</p> : null}
-        {install.status === 'done'
-          ? (
-              <div className="dshWorkerSection">
-                <p className="dshWorkerStatus" data-tone={install.tone}>{t(install.message)}</p>
-                {install.restartToken === undefined
-                  ? null
-                  : (
-                      <div className="dshWorkerActions">
-                        <button type="button" className="dshWorkerButton" onClick={restartNow}>
-                          {t('installRestartNow')}
-                        </button>
-                      </div>
-                    )}
-              </div>
-            )
-          : null}
       </div>
     </div>
   )

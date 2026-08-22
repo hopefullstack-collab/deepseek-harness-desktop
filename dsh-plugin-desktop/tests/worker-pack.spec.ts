@@ -4,7 +4,10 @@ import { en, zh } from '../src/client/locales.ts'
 import {
   COMPANY_PACK_PACKAGE_NAME,
   COMPANY_PACK_RECOMMENDED_ENTRY,
+  DESKTOP_BUILTIN_PLUGINS_TAB_ID,
+  DESKTOP_CURATED_PLUGINS_TAB_ID,
   DESKTOP_DEFAULT_AGENT_PRESET,
+  DESKTOP_ENTERPRISE_PLUGINS_TAB_ID,
   DESKTOP_INTERNAL_MARKET_TAB_ID,
   DESKTOP_PLUGIN_SETTINGS_TAB_IDS,
   DESKTOP_WORKBENCH_PAGE_IDS,
@@ -79,65 +82,72 @@ describe('desktop worker pack', () => {
 
   it('keeps worker-pack locale keys aligned', () => {
     expect(Object.keys(en).sort()).toEqual(Object.keys(zh).sort())
-    expect(zh.internalMarketTab).toBe('内部市场')
-    expect(zh.internalMarketBody).toContain('Example Company')
-    expect(zh.internalMarketBody).toContain('插件市场')
-    expect(zh.internalMarketBody).toContain('不会开机自动装')
+    expect(zh.builtinTab).toBe('内置')
+    expect(zh.enterpriseTab).toBe('企业内部')
+    expect(zh.curatedTab).toBe('精选推荐')
+    expect(zh.curatedBody).toContain('精选')
+    expect(zh.curatedBody).toContain('不会开机自动装')
+    expect(zh.enterpriseBody).toContain('公司')
     expect(zh.companyPackBody).toContain('确认')
-    expect(zh.companyPackRecommendationsHint).toContain('Example Company')
-    expect(zh.companyExamplePluginsBody).toContain('推荐')
+    expect(zh.companyPackRecommendationsHint).toContain('精选推荐')
     expect(zh.officeImBody).toContain('不是白名单')
     expect(zh.officeImBody).toContain('社区插件')
-    expect(zh.workerBody).toContain('Example Company')
+    expect(zh.workerBody).toContain('精选推荐')
     expect(zh.installWorkspace).toContain('一键安装')
-    expect(en.internalMarketTab).toBe('Internal Market')
-    expect(en.internalMarketBody).toContain('Example Company')
-    expect(en.internalMarketBody).toContain('Plugin market')
-    expect(en.internalMarketBody).toContain('nothing installs at launch')
+    expect(en.builtinTab).toBe('Built-in')
+    expect(en.enterpriseTab).toBe('Enterprise')
+    expect(en.curatedTab).toBe('Featured')
+    expect(en.curatedBody).toContain('curated')
+    expect(en.curatedBody).toContain('Nothing installs at launch')
     expect(en.companyPackBody).toContain('Confirming')
     expect(en.companyPackBody).toContain('never silent-preinstalls')
     expect(zh.companyPackBody).toContain('不会开机自动装')
-    expect(en.companyPackRecommendationsHint).toContain('Example Company')
-    expect(en.companyExamplePluginsBody).toContain('recommendations')
+    expect(en.companyPackRecommendationsHint).toContain('Featured')
     expect(en.officeImBody).toContain('not an allowlist')
     expect(en.officeImBody).toContain('community')
-    expect(en.workerBody).toContain('Example Company')
+    expect(en.workerBody).toContain('Featured')
     expect(en.installWorkspace).toContain('Install recommended workspace')
   })
 
-  it('keeps desktop workbench pages off the official Plugins tab row', () => {
-    expect(DESKTOP_INTERNAL_MARKET_TAB_ID).toBe('desktop-internal-market')
+  it('keeps desktop workbench pages under the Built-in Plugins tab', () => {
+    expect(DESKTOP_BUILTIN_PLUGINS_TAB_ID).toBe('desktop-builtin')
+    expect(DESKTOP_ENTERPRISE_PLUGINS_TAB_ID).toBe('desktop-enterprise')
+    expect(DESKTOP_CURATED_PLUGINS_TAB_ID).toBe('desktop-curated')
+    expect(DESKTOP_INTERNAL_MARKET_TAB_ID).toBe(DESKTOP_CURATED_PLUGINS_TAB_ID)
     expect(DESKTOP_PLUGIN_SETTINGS_TAB_IDS).toEqual([
-      'desktop-worker-pack',
-      'desktop-internal-market',
-      'desktop-mcp',
+      'desktop-builtin',
+      'desktop-enterprise',
+      'desktop-curated',
     ])
-    expect(DESKTOP_WORKBENCH_PAGE_IDS).toEqual(['models', 'home', 'remote'])
+    expect(DESKTOP_WORKBENCH_PAGE_IDS).toEqual(['models', 'home', 'remote', 'mcp'])
   })
 
-  it('owns Company Pack UI on Internal Market; recommendations live on Example Company settings', () => {
-    const market = readFileSync(new URL('../src/client/InternalMarketTab.tsx', import.meta.url), 'utf8')
+  it('splits Built-in / Enterprise / Featured Plugins tabs', () => {
+    const enterprise = readFileSync(new URL('../src/client/EnterprisePluginsTab.tsx', import.meta.url), 'utf8')
+    const curated = readFileSync(new URL('../src/client/CuratedPluginsTab.tsx', import.meta.url), 'utf8')
     const company = readFileSync(new URL('../src/client/CompanyExampleSection.tsx', import.meta.url), 'utf8')
     const pack = readFileSync(new URL('../src/client/WorkerPackTab.tsx', import.meta.url), 'utf8')
     const hub = readFileSync(new URL('../src/client/DesktopWorkbenchHub.tsx', import.meta.url), 'utf8')
     const client = readFileSync(new URL('../src/client/index.ts', import.meta.url), 'utf8')
     const patch = readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
-    expect(market).toContain('installCompanyPackWithCascade')
-    expect(market).toContain('COMPANY_PACK_RECOMMENDED_ENTRY')
-    expect(market).not.toContain('WORKER_PACK_RECOMMENDED_PLUGINS')
-    expect(market).not.toContain('OFFICE_IM_RECOMMENDED_PLUGINS')
-    expect(market).not.toContain('WORKBENCH_LATER_RECOMMENDED_PLUGINS')
-    expect(company).toContain('installRecommendedPlugins')
-    expect(company).toContain('COMPANY_PACK_RECOMMENDED_COMMUNITY_PLUGINS')
-    expect(company).toContain('OFFICE_IM_RECOMMENDED_PLUGINS')
-    expect(company).toContain('WORKBENCH_LATER_RECOMMENDED_PLUGINS')
+    expect(enterprise).toContain('installCompanyPackWithCascade')
+    expect(enterprise).toContain('COMPANY_PACK_RECOMMENDED_ENTRY')
+    expect(enterprise).not.toContain('OFFICE_IM_RECOMMENDED_PLUGINS')
+    expect(curated).toContain('installRecommendedPlugins')
+    expect(curated).toContain('COMPANY_PACK_RECOMMENDED_COMMUNITY_PLUGINS')
+    expect(curated).toContain('OFFICE_IM_RECOMMENDED_PLUGINS')
+    expect(curated).toContain('WORKBENCH_LATER_RECOMMENDED_PLUGINS')
+    expect(company).not.toContain('installRecommendedPlugins')
     expect(pack).not.toContain('installRecommendedPlugins')
     expect(pack).not.toContain('WORKER_PACK_RECOMMENDED_PLUGINS')
+    expect(hub).toContain('McpSettingsTab')
     expect(hub).not.toContain('installRecommendedPlugins')
     expect(hub).not.toMatch(/page === 'pack'/)
-    expect(client).toContain('DESKTOP_INTERNAL_MARKET_TAB_ID')
-    expect(client).toContain('InternalMarketTab')
-    expect(client).toContain('CompanyExampleSection')
+    expect(client).toContain('DESKTOP_BUILTIN_PLUGINS_TAB_ID')
+    expect(client).toContain('DESKTOP_ENTERPRISE_PLUGINS_TAB_ID')
+    expect(client).toContain('DESKTOP_CURATED_PLUGINS_TAB_ID')
+    expect(client).toContain('EnterprisePluginsTab')
+    expect(client).toContain('CuratedPluginsTab')
     expect(client).not.toMatch(/id: ['"]community-market['"]/)
     expect(patch).toContain('dsh-plugin-desktop/company-pack-install')
     expect(patch).not.toMatch(/name:\s*dsh-plugin-company-pack\b/u)

@@ -126,18 +126,27 @@ export function workerPackCatalogSelected(
   ))
 }
 
-/** Desktop-owned Internal Market tab. Sibling of Plugin Market, not a community package. */
-export const DESKTOP_INTERNAL_MARKET_TAB_ID = 'desktop-internal-market'
+/** Workbench pages that share the Built-in Plugins tab instead of adding more top tabs. */
+export const DESKTOP_WORKBENCH_PAGE_IDS = ['models', 'home', 'remote', 'mcp'] as const
+
+/** Desktop-owned Built-in Plugins tab (ships with the app). */
+export const DESKTOP_BUILTIN_PLUGINS_TAB_ID = 'desktop-builtin'
+
+/** Desktop-owned Enterprise Plugins tab (Company Pack). */
+export const DESKTOP_ENTERPRISE_PLUGINS_TAB_ID = 'desktop-enterprise'
+
+/** Desktop-owned Curated Plugins tab (featured recommendations). */
+export const DESKTOP_CURATED_PLUGINS_TAB_ID = 'desktop-curated'
+
+/** @deprecated Use {@link DESKTOP_CURATED_PLUGINS_TAB_ID}. */
+export const DESKTOP_INTERNAL_MARKET_TAB_ID = DESKTOP_CURATED_PLUGINS_TAB_ID
 
 /** Top-level Plugins tabs registered by the desktop client. */
 export const DESKTOP_PLUGIN_SETTINGS_TAB_IDS = [
-  'desktop-worker-pack',
-  DESKTOP_INTERNAL_MARKET_TAB_ID,
-  'desktop-mcp',
+  DESKTOP_BUILTIN_PLUGINS_TAB_ID,
+  DESKTOP_ENTERPRISE_PLUGINS_TAB_ID,
+  DESKTOP_CURATED_PLUGINS_TAB_ID,
 ] as const
-
-/** Workbench pages that share the Worker pack tab instead of adding more top tabs. */
-export const DESKTOP_WORKBENCH_PAGE_IDS = ['models', 'home', 'remote'] as const
 
 /** User-initiated install groups on the Internal Market tab. */
 export type WorkerPackInstallKind = 'workspace' | 'office-im' | 'later' | 'company-pack'
