@@ -132,10 +132,16 @@ export const DESKTOP_WORKBENCH_PAGE_IDS = ['models', 'home', 'remote', 'mcp'] as
 /** Desktop-owned Built-in Plugins tab (ships with the app). */
 export const DESKTOP_BUILTIN_PLUGINS_TAB_ID = 'desktop-builtin'
 
-/** Desktop-owned Enterprise Plugins tab (Company Pack). */
+/**
+ * @deprecated Enterprise UI lives under Example Company settings, not a Plugins tab.
+ * Kept for stable id references in older docs/tests.
+ */
 export const DESKTOP_ENTERPRISE_PLUGINS_TAB_ID = 'desktop-enterprise'
 
-/** Desktop-owned Curated Plugins tab (featured recommendations). */
+/**
+ * @deprecated Featured UI lives under Example Company settings, not a Plugins tab.
+ * Kept for stable id references in older docs/tests.
+ */
 export const DESKTOP_CURATED_PLUGINS_TAB_ID = 'desktop-curated'
 
 /** @deprecated Use {@link DESKTOP_CURATED_PLUGINS_TAB_ID}. */
@@ -144,9 +150,10 @@ export const DESKTOP_INTERNAL_MARKET_TAB_ID = DESKTOP_CURATED_PLUGINS_TAB_ID
 /** Top-level Plugins tabs registered by the desktop client. */
 export const DESKTOP_PLUGIN_SETTINGS_TAB_IDS = [
   DESKTOP_BUILTIN_PLUGINS_TAB_ID,
-  DESKTOP_ENTERPRISE_PLUGINS_TAB_ID,
-  DESKTOP_CURATED_PLUGINS_TAB_ID,
 ] as const
+
+/** Example Company settings.section id (Built-in / Enterprise / Featured hub). */
+export const COMPANY_EXAMPLE_SETTINGS_SECTION_ID = 'company-example'
 
 /** User-initiated install groups on the Internal Market tab. */
 export type WorkerPackInstallKind = 'workspace' | 'office-im' | 'later' | 'company-pack'

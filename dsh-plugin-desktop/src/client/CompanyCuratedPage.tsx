@@ -1,9 +1,8 @@
 /**
- * Curated (featured) Plugins tab: desktop-owned recommendations + catalog.
+ * Featured / curated page inside Example Company settings.
  */
 
 import { useEffect, useState, type ReactNode } from 'react'
-import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import {
   COMPANY_PACK_RECOMMENDED_COMMUNITY_PLUGINS,
   OFFICE_IM_RECOMMENDED_PLUGINS,
@@ -24,9 +23,6 @@ import {
 } from './market-actions.ts'
 import { RecommendedPluginCard } from './RecommendedPluginCard.tsx'
 
-export type CuratedPluginsTabProps = PropsRuntime<'settings.plugins.tab'>
-  & PropsLocale<'dsh-desktop'>
-
 type CatalogState =
   | { readonly status: 'loading' }
   | { readonly status: 'ready'; readonly selected: boolean }
@@ -38,28 +34,12 @@ type InstallState =
   | { readonly status: 'busy' }
   | { readonly status: 'done'; readonly tone: 'ok' | 'error'; readonly message: DesktopLocaleKey; readonly restartToken?: string }
 
-/** Star / pick glyph for the curated Plugins tab. */
-function CuratedGlyph(): ReactNode {
-  return (
-    <svg
-      className="dshInternalMarketGlyph"
-      viewBox="0 0 24 24"
-      width="16"
-      height="16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9" />
-    </svg>
-  )
-}
-
-/** Desktop-curated community picks — not an allowlist, never silent-preinstalled. */
-export function CuratedPluginsTab({ t }: CuratedPluginsTabProps): ReactNode {
+/** Curated community picks — lives under Example Company → Featured. */
+export function CompanyCuratedPage({
+  t,
+}: {
+  readonly t: (key: DesktopLocaleKey) => string
+}): ReactNode {
   const [catalog, setCatalog] = useState<CatalogState>({ status: 'loading' })
   const [installedNames, setInstalledNames] = useState<readonly string[]>([])
   const [install, setInstall] = useState<InstallState>({ status: 'idle' })
@@ -124,16 +104,7 @@ export function CuratedPluginsTab({ t }: CuratedPluginsTabProps): ReactNode {
   const isInstalled = (packageName: string): boolean => installedNames.includes(packageName)
 
   return (
-    <section className="dshWorkerRoot dshInternalMarketRoot" aria-label={t('curatedTitle')}>
-      <header className="dshInternalMarketHeader">
-        <div className="dshInternalMarketGlyphWrap">
-          <CuratedGlyph />
-        </div>
-        <div className="dshInternalMarketHeaderTitle">
-          <h2>{t('curatedTitle')}</h2>
-          <p>{t('curatedBody')}</p>
-        </div>
-      </header>
+    <div className="dshWorkerRoot dshCompanyExamplePage" aria-label={t('curatedTitle')}>
       <div className="dshWorkerSection">
         <h2>{t('pluginsTitle')}</h2>
         <p>{t('pluginsBody')}</p>
@@ -242,6 +213,6 @@ export function CuratedPluginsTab({ t }: CuratedPluginsTabProps): ReactNode {
           ? <p className="dshWorkerStatus" data-tone="ok">{t('catalogReady')}</p>
           : null}
       </div>
-    </section>
+    </div>
   )
 }

@@ -11,16 +11,16 @@ import { installDesktopDirectoryPickerBridge, requestDesktopDirectoryValidation 
 import { parseDesktopClientEnvironment } from './environment.ts'
 import { installWorkspaceFolderDrop } from './workspace-folder-drop.ts'
 import { en, zh, type DesktopLocaleKey } from './locales.ts'
-import { DESKTOP_BUILTIN_PLUGINS_TAB_ID, DESKTOP_CURATED_PLUGINS_TAB_ID, DESKTOP_ENTERPRISE_PLUGINS_TAB_ID } from '../worker-pack.ts'
+import {
+  COMPANY_EXAMPLE_SETTINGS_SECTION_ID,
+  DESKTOP_BUILTIN_PLUGINS_TAB_ID,
+} from '../worker-pack.ts'
 import { CommandPalette } from './CommandPalette.tsx'
 import { CompanyExampleSection } from './CompanyExampleSection.tsx'
-import { CuratedPluginsTab } from './CuratedPluginsTab.tsx'
 import { DesktopWorkbenchHub } from './DesktopWorkbenchHub.tsx'
-import { EnterprisePluginsTab } from './EnterprisePluginsTab.tsx'
 import { DESKTOP_MCP_SETTINGS_KEY, type DesktopMcpSettings } from '../mcp-settings.ts'
 import { DESKTOP_WORKBENCH_SETTINGS_KEY, type DesktopWorkbenchSettings } from '../workbench-settings.ts'
 import { installWorkerStyles } from './worker-styles.ts'
-import { readCompanyPackPreview } from './market-actions.ts'
 
 const DESKTOP_CLIENT_LOCALE_NS = 'dsh-desktop'
 
@@ -97,20 +97,6 @@ export function apply(ctx: ClientContext): void {
         }) as SettingsScope<DesktopMcpSettings>,
       }),
     }, DesktopWorkbenchHub))
-    settingsCtx.slots.inject('settings.plugins.tab', () => settingsCtx.slots.register({
-      name: 'settings.plugins.tab',
-      id: DESKTOP_ENTERPRISE_PLUGINS_TAB_ID,
-      order: 18,
-      label: () => settingsCtx.locale.bind(DESKTOP_CLIENT_LOCALE_NS)('enterpriseTab'),
-      locale: DESKTOP_CLIENT_LOCALE_NS,
-    }, EnterprisePluginsTab))
-    settingsCtx.slots.inject('settings.plugins.tab', () => settingsCtx.slots.register({
-      name: 'settings.plugins.tab',
-      id: DESKTOP_CURATED_PLUGINS_TAB_ID,
-      order: 20,
-      label: () => settingsCtx.locale.bind(DESKTOP_CLIENT_LOCALE_NS)('curatedTab'),
-      locale: DESKTOP_CLIENT_LOCALE_NS,
-    }, CuratedPluginsTab))
     settingsCtx.slots.inject('shell.overlay', () => settingsCtx.slots.register({
       name: 'shell.overlay',
       id: 'desktop-command-palette',
@@ -121,29 +107,16 @@ export function apply(ctx: ClientContext): void {
         workspaces: ctx.workspaces,
       }),
     }, CommandPalette))
-    // Company Pack child settings: standalone section after confirm-to-install only.
-    settingsCtx.effect(() => {
-      const controller = new AbortController()
-      let disposeSection: (() => void) | undefined
-      void readCompanyPackPreview(controller.signal).then(
-        (preview) => {
-          if (controller.signal.aborted || !preview.enabled || disposeSection !== undefined) return
-          const t = settingsCtx.locale.bind(DESKTOP_CLIENT_LOCALE_NS)
-          disposeSection = settingsCtx.slots.inject('settings.section', () => settingsCtx.slots.register({
-            name: 'settings.section',
-            id: 'company-example',
-            order: 90,
-            label: () => t('companyExampleNav'),
-            locale: DESKTOP_CLIENT_LOCALE_NS,
-          }, CompanyExampleSection))
-        },
-        () => undefined,
-      )
-      return () => {
-        controller.abort()
-        disposeSection?.()
-      }
-    }, 'dsh-plugin-desktop: company example settings when pack enabled')
+    // Company plugin settings hub — always registered so Enterprise install is reachable.
+    // Built-in / Enterprise / Featured are inner pages of this section, not Plugins tabs.
+    const t = settingsCtx.locale.bind(DESKTOP_CLIENT_LOCALE_NS)
+    settingsCtx.slots.inject('settings.section', () => settingsCtx.slots.register({
+      name: 'settings.section',
+      id: COMPANY_EXAMPLE_SETTINGS_SECTION_ID,
+      order: 90,
+      label: () => t('companyExampleNav'),
+      locale: DESKTOP_CLIENT_LOCALE_NS,
+    }, CompanyExampleSection))
   })
   if (environment.mode === 'advanced') applyAdvancedShell(ctx, environment)
 }

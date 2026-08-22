@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { en, zh } from '../src/client/locales.ts'
 import {
+  COMPANY_EXAMPLE_SETTINGS_SECTION_ID,
   COMPANY_PACK_PACKAGE_NAME,
   COMPANY_PACK_RECOMMENDED_ENTRY,
   DESKTOP_BUILTIN_PLUGINS_TAB_ID,
@@ -83,8 +84,10 @@ describe('desktop worker pack', () => {
   it('keeps worker-pack locale keys aligned', () => {
     expect(Object.keys(en).sort()).toEqual(Object.keys(zh).sort())
     expect(zh.builtinTab).toBe('内置')
-    expect(zh.enterpriseTab).toBe('企业内部')
-    expect(zh.curatedTab).toBe('精选推荐')
+    expect(zh.companyExampleTabBuiltin).toBe('内置')
+    expect(zh.companyExampleTabEnterprise).toBe('企业内部')
+    expect(zh.companyExampleTabCurated).toBe('精选推荐')
+    expect(zh.companyExampleIntro).toContain('公司插件')
     expect(zh.curatedBody).toContain('精选')
     expect(zh.curatedBody).toContain('不会开机自动装')
     expect(zh.enterpriseBody).toContain('公司')
@@ -92,12 +95,14 @@ describe('desktop worker pack', () => {
     expect(zh.companyPackRecommendationsHint).toContain('精选推荐')
     expect(zh.officeImBody).toContain('不是白名单')
     expect(zh.officeImBody).toContain('社区插件')
-    expect(zh.workerBody).toContain('精选推荐')
+    expect(zh.workerBody).toContain('Example Company')
     expect(zh.installWorkspace).toContain('一键安装')
     expect(en.builtinTab).toBe('Built-in')
-    expect(en.enterpriseTab).toBe('Enterprise')
-    expect(en.curatedTab).toBe('Featured')
-    expect(en.curatedBody).toContain('curated')
+    expect(en.companyExampleTabBuiltin).toBe('Built-in')
+    expect(en.companyExampleTabEnterprise).toBe('Enterprise')
+    expect(en.companyExampleTabCurated).toBe('Featured')
+    expect(en.companyExampleIntro).toContain('company plugin')
+    expect(en.curatedBody).toContain('Curated')
     expect(en.curatedBody).toContain('Nothing installs at launch')
     expect(en.companyPackBody).toContain('Confirming')
     expect(en.companyPackBody).toContain('never silent-preinstalls')
@@ -105,7 +110,7 @@ describe('desktop worker pack', () => {
     expect(en.companyPackRecommendationsHint).toContain('Featured')
     expect(en.officeImBody).toContain('not an allowlist')
     expect(en.officeImBody).toContain('community')
-    expect(en.workerBody).toContain('Featured')
+    expect(en.workerBody).toContain('Example Company')
     expect(en.installWorkspace).toContain('Install recommended workspace')
   })
 
@@ -116,20 +121,24 @@ describe('desktop worker pack', () => {
     expect(DESKTOP_INTERNAL_MARKET_TAB_ID).toBe(DESKTOP_CURATED_PLUGINS_TAB_ID)
     expect(DESKTOP_PLUGIN_SETTINGS_TAB_IDS).toEqual([
       'desktop-builtin',
-      'desktop-enterprise',
-      'desktop-curated',
     ])
+    expect(COMPANY_EXAMPLE_SETTINGS_SECTION_ID).toBe('company-example')
     expect(DESKTOP_WORKBENCH_PAGE_IDS).toEqual(['models', 'home', 'remote', 'mcp'])
   })
 
-  it('splits Built-in / Enterprise / Featured Plugins tabs', () => {
-    const enterprise = readFileSync(new URL('../src/client/EnterprisePluginsTab.tsx', import.meta.url), 'utf8')
-    const curated = readFileSync(new URL('../src/client/CuratedPluginsTab.tsx', import.meta.url), 'utf8')
+  it('hosts Built-in / Enterprise / Featured under Example Company settings', () => {
     const company = readFileSync(new URL('../src/client/CompanyExampleSection.tsx', import.meta.url), 'utf8')
+    const enterprise = readFileSync(new URL('../src/client/CompanyEnterprisePage.tsx', import.meta.url), 'utf8')
+    const curated = readFileSync(new URL('../src/client/CompanyCuratedPage.tsx', import.meta.url), 'utf8')
     const pack = readFileSync(new URL('../src/client/WorkerPackTab.tsx', import.meta.url), 'utf8')
     const hub = readFileSync(new URL('../src/client/DesktopWorkbenchHub.tsx', import.meta.url), 'utf8')
     const client = readFileSync(new URL('../src/client/index.ts', import.meta.url), 'utf8')
     const patch = readFileSync(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
+    expect(company).toContain('companyExampleTabBuiltin')
+    expect(company).toContain('companyExampleTabEnterprise')
+    expect(company).toContain('companyExampleTabCurated')
+    expect(company).toContain('CompanyEnterprisePage')
+    expect(company).toContain('CompanyCuratedPage')
     expect(enterprise).toContain('installCompanyPackWithCascade')
     expect(enterprise).toContain('COMPANY_PACK_RECOMMENDED_ENTRY')
     expect(enterprise).not.toContain('OFFICE_IM_RECOMMENDED_PLUGINS')
@@ -137,17 +146,18 @@ describe('desktop worker pack', () => {
     expect(curated).toContain('COMPANY_PACK_RECOMMENDED_COMMUNITY_PLUGINS')
     expect(curated).toContain('OFFICE_IM_RECOMMENDED_PLUGINS')
     expect(curated).toContain('WORKBENCH_LATER_RECOMMENDED_PLUGINS')
-    expect(company).not.toContain('installRecommendedPlugins')
     expect(pack).not.toContain('installRecommendedPlugins')
     expect(pack).not.toContain('WORKER_PACK_RECOMMENDED_PLUGINS')
     expect(hub).toContain('McpSettingsTab')
     expect(hub).not.toContain('installRecommendedPlugins')
     expect(hub).not.toMatch(/page === 'pack'/)
     expect(client).toContain('DESKTOP_BUILTIN_PLUGINS_TAB_ID')
-    expect(client).toContain('DESKTOP_ENTERPRISE_PLUGINS_TAB_ID')
-    expect(client).toContain('DESKTOP_CURATED_PLUGINS_TAB_ID')
-    expect(client).toContain('EnterprisePluginsTab')
-    expect(client).toContain('CuratedPluginsTab')
+    expect(client).toContain('CompanyExampleSection')
+    expect(client).toContain('COMPANY_EXAMPLE_SETTINGS_SECTION_ID')
+    expect(client).not.toContain('DESKTOP_ENTERPRISE_PLUGINS_TAB_ID')
+    expect(client).not.toContain('DESKTOP_CURATED_PLUGINS_TAB_ID')
+    expect(client).not.toContain('EnterprisePluginsTab')
+    expect(client).not.toContain('CuratedPluginsTab')
     expect(client).not.toMatch(/id: ['"]community-market['"]/)
     expect(patch).toContain('dsh-plugin-desktop/company-pack-install')
     expect(patch).not.toMatch(/name:\s*dsh-plugin-company-pack\b/u)

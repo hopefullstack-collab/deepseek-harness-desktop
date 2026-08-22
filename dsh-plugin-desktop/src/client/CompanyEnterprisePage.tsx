@@ -1,9 +1,8 @@
 /**
- * Enterprise (company-internal) Plugins tab: Company Pack confirm-to-install.
+ * Enterprise page inside Example Company settings (Company Pack confirm).
  */
 
 import { useEffect, useState, type ReactNode } from 'react'
-import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import {
   COMPANY_PACK_RECOMMENDED_ENTRY,
   buildCompanyPackInstallPlan,
@@ -16,39 +15,18 @@ import {
   requestWorkerPackRestart,
 } from './market-actions.ts'
 
-export type EnterprisePluginsTabProps = PropsRuntime<'settings.plugins.tab'>
-  & PropsLocale<'dsh-desktop'>
-
 type InstallState =
   | { readonly status: 'idle' }
   | { readonly status: 'busy' }
   | { readonly status: 'confirm-company-pack'; readonly entries: readonly { readonly packageName: string; readonly displayName: string; readonly kind: string }[] }
   | { readonly status: 'done'; readonly tone: 'ok' | 'error'; readonly message: DesktopLocaleKey; readonly restartToken?: string }
 
-/** Building / org glyph for the enterprise Plugins tab. */
-function EnterpriseGlyph(): ReactNode {
-  return (
-    <svg
-      className="dshInternalMarketGlyph"
-      viewBox="0 0 24 24"
-      width="16"
-      height="16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="4" y="3" width="16" height="18" rx="2" />
-      <path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1" />
-      <path d="M10 21v-4h4v4" />
-    </svg>
-  )
-}
-
-/** Company Pack and enterprise children — not the open community store. */
-export function EnterprisePluginsTab({ t }: EnterprisePluginsTabProps): ReactNode {
+/** Company Pack confirm-to-install — lives under Example Company → Enterprise. */
+export function CompanyEnterprisePage({
+  t,
+}: {
+  readonly t: (key: DesktopLocaleKey) => string
+}): ReactNode {
   const [companyPackEnabled, setCompanyPackEnabled] = useState(false)
   const [install, setInstall] = useState<InstallState>({ status: 'idle' })
 
@@ -93,16 +71,7 @@ export function EnterprisePluginsTab({ t }: EnterprisePluginsTabProps): ReactNod
   const busy = install.status === 'busy'
 
   return (
-    <section className="dshWorkerRoot dshInternalMarketRoot" aria-label={t('enterpriseTitle')}>
-      <header className="dshInternalMarketHeader">
-        <div className="dshInternalMarketGlyphWrap">
-          <EnterpriseGlyph />
-        </div>
-        <div className="dshInternalMarketHeaderTitle">
-          <h2>{t('enterpriseTitle')}</h2>
-          <p>{t('enterpriseBody')}</p>
-        </div>
-      </header>
+    <div className="dshWorkerRoot dshCompanyExamplePage" aria-label={t('enterpriseTitle')}>
       <div className="dshWorkerSection">
         <h2>{t('companyPackTitle')}</h2>
         <p>{t('companyPackBody')}</p>
@@ -181,6 +150,6 @@ export function EnterprisePluginsTab({ t }: EnterprisePluginsTabProps): ReactNod
             </div>
           )
         : null}
-    </section>
+    </div>
   )
 }
