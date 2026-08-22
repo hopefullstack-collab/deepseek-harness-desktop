@@ -125,6 +125,16 @@ desktopPnpm.runPlugin(['install', '--no-frozen-lockfile'], invokingDir, signal)
 
 开发者可以先阅读 [架构说明](architecture.md)，再使用包级 [service contract](../dsh-plugin-desktop/docs/plugin-services.md)。
 
+## 可选：Example Company 插件
+
+公司示例能力由独立仓库 [`dsh-plugin-company-example`](https://github.com/hopefullstack-collab/dsh-plugin-company-example) 提供，**不会**默认写入本仓库的 `cordis.patch.yml`。在标准 DSH Desktop 上按需安装：
+
+```sh
+dsh plugin --profile desktop add dsh-plugin-company-example
+```
+
+安装并重启后，**设置 → Example Company** 会出现 Built-in / Enterprise / Featured 三个页签。Enterprise 与 Featured 通过内置 **插件市场**（`dsh-community-market`）安装推荐包，不依赖产品私有的 `/api/desktop/*` 路由。
+
 ## 生态愿景：保持插件生态可组合
 
 DSH 的插件生态正在快速增长。插件越多，它们能否协同工作就越重要——如果每个插件都假设或覆盖其他插件的内部实现，装几个插件就会开始冲突，生态会逐渐碎片化。
