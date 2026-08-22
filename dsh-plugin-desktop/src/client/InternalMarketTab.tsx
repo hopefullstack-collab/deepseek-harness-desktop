@@ -2,23 +2,14 @@ import { useEffect, useState, type ReactNode } from 'react'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import {
   COMPANY_PACK_RECOMMENDED_ENTRY,
-  OFFICE_IM_RECOMMENDED_PLUGINS,
-  WORKBENCH_LATER_RECOMMENDED_PLUGINS,
-  WORKER_PACK_RECOMMENDED_PLUGINS,
   buildCompanyPackInstallPlan,
-  recommendedPackageInstalled,
-  recommendedPluginsFor,
   summarizeWorkerPackInstallResults,
-  type WorkerPackInstallKind,
-  type WorkerPackRecommendedPlugin,
 } from '../worker-pack.ts'
 import type { DesktopLocaleKey } from './locales.ts'
 import {
   installCompanyPackWithCascade,
-  installRecommendedPlugins,
   readCompanyPackPreview,
   readMarketSources,
-  readWorkerPackInstallations,
   requestWorkerPackRestart,
   selectWorkerPackCatalog,
   workerPackCatalogSelected,
@@ -26,51 +17,6 @@ import {
 
 export type InternalMarketTabProps = PropsRuntime<'settings.plugins.tab'>
   & PropsLocale<'dsh-desktop'>
-
-const ROLE_KEY: Record<WorkerPackRecommendedPlugin['role'], DesktopLocaleKey> = {
-  'workspace-shell': 'pluginWorkspaceShell',
-  'workspace-context': 'pluginWorkspaceContext',
-  'workspace-mobile': 'pluginWorkspaceMobile',
-  'office-dingtalk': 'pluginOfficeDingtalk',
-  'office-wecom': 'pluginOfficeWecom',
-  'company-pack': 'pluginCompanyPack',
-}
-
-function RecommendedPluginCard({
-  plugin,
-  t,
-  installed,
-  busy,
-  onInstall,
-}: {
-  readonly plugin: WorkerPackRecommendedPlugin
-  readonly t: InternalMarketTabProps['t']
-  readonly installed: boolean
-  readonly busy: boolean
-  readonly onInstall: (packageName: string) => void
-}): ReactNode {
-  return (
-    <article className="dshWorkerCard">
-      <h3>{plugin.displayName}</h3>
-      <p>{t(ROLE_KEY[plugin.role])}</p>
-      <div className="dshWorkerMeta">
-        <span>{t('pluginPackage')}</span>
-        <code className="dshWorkerCode">{plugin.packageName}</code>
-        <a href={plugin.repositoryUrl} target="_blank" rel="noreferrer">{t('openRepository')}</a>
-      </div>
-      <div className="dshWorkerActions">
-        <button
-          type="button"
-          className="dshWorkerButton dshWorkerButtonSecondary"
-          disabled={busy || installed}
-          onClick={() => onInstall(plugin.packageName)}
-        >
-          {installed ? t('installed') : t('installPlugin')}
-        </button>
-      </div>
-    </article>
-  )
-}
 
 type CatalogState =
   | { readonly status: 'loading' }
@@ -109,21 +55,15 @@ function InternalMarketGlyph(): ReactNode {
   )
 }
 
-/** Desktop-owned curated recommendations. Community market stays the open store. */
+/**
+ * Desktop-owned curated entry for Company Pack + catalog.
+ * Workspace / office / later recommendations live on Example Company settings
+ * after the pack is enabled.
+ */
 export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
   const [catalog, setCatalog] = useState<CatalogState>({ status: 'loading' })
-  const [installedNames, setInstalledNames] = useState<readonly string[]>([])
   const [companyPackEnabled, setCompanyPackEnabled] = useState(false)
   const [install, setInstall] = useState<InstallState>({ status: 'idle' })
-
-  const refreshInstallations = async (signal?: AbortSignal): Promise<void> => {
-    const installations = await readWorkerPackInstallations(signal)
-    setInstalledNames([
-      ...WORKER_PACK_RECOMMENDED_PLUGINS,
-      ...WORKBENCH_LATER_RECOMMENDED_PLUGINS,
-      ...OFFICE_IM_RECOMMENDED_PLUGINS,
-    ].filter(plugin => recommendedPackageInstalled(plugin.packageName, installations)).map(plugin => plugin.packageName))
-  }
 
   useEffect(() => {
     const controller = new AbortController()
@@ -133,7 +73,6 @@ export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
       },
       () => { setCatalog({ status: 'error' }) },
     )
-    void refreshInstallations(controller.signal).catch(() => undefined)
     void readCompanyPackPreview(controller.signal).then(
       (preview) => { setCompanyPackEnabled(preview.enabled) },
       () => undefined,
@@ -149,28 +88,6 @@ export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
     )
   }
 
-  const runInstall = (packageNames: readonly string[]): void => {
-    setInstall({ status: 'busy' })
-    void installRecommendedPlugins(packageNames).then(
-      async (outcome) => {
-        await refreshInstallations().catch(() => undefined)
-        setCatalog({ status: 'ready', selected: true })
-        const message = summarizeWorkerPackInstallResults(outcome.results)
-        setInstall({
-          status: 'done',
-          tone: message === 'installError' || message === 'installMissing' ? 'error' : 'ok',
-          message,
-          ...(outcome.restartToken === undefined ? {} : { restartToken: outcome.restartToken }),
-        })
-      },
-      () => { setInstall({ status: 'done', tone: 'error', message: 'installError' }) },
-    )
-  }
-
-  const installKind = (kind: WorkerPackInstallKind): void => {
-    runInstall(recommendedPluginsFor(kind).map(plugin => plugin.packageName))
-  }
-
   const beginCompanyPackConfirm = (): void => {
     setInstall({
       status: 'confirm-company-pack',
@@ -182,7 +99,6 @@ export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
     setInstall({ status: 'busy' })
     void installCompanyPackWithCascade().then(
       async (outcome) => {
-        await refreshInstallations().catch(() => undefined)
         setCompanyPackEnabled(outcome.packEnabled)
         setCatalog({ status: 'ready', selected: true })
         const message = summarizeWorkerPackInstallResults(outcome.results)
@@ -203,7 +119,6 @@ export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
   }
 
   const busy = catalog.status === 'busy' || install.status === 'busy'
-  const isInstalled = (packageName: string): boolean => installedNames.includes(packageName)
 
   return (
     <section className="dshWorkerRoot dshInternalMarketRoot" aria-label={t('internalMarketTitle')}>
@@ -238,6 +153,9 @@ export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
             </button>
           </div>
         </article>
+        {companyPackEnabled
+          ? <p className="dshWorkerStatus" data-tone="ok">{t('companyPackRecommendationsHint')}</p>
+          : null}
         {install.status === 'confirm-company-pack'
           ? (
               <div className="dshWorkerSection" role="dialog" aria-label={t('confirmCompanyPackTitle')}>
@@ -273,78 +191,6 @@ export function InternalMarketTab({ t }: InternalMarketTabProps): ReactNode {
               </div>
             )
           : null}
-      </div>
-      <div className="dshWorkerSection">
-        <h2>{t('pluginsTitle')}</h2>
-        <p>{t('pluginsBody')}</p>
-        <div className="dshWorkerActions">
-          <button
-            type="button"
-            className="dshWorkerButton"
-            disabled={busy || WORKER_PACK_RECOMMENDED_PLUGINS.every(plugin => isInstalled(plugin.packageName))}
-            onClick={() => installKind('workspace')}
-          >
-            {t('installWorkspace')}
-          </button>
-        </div>
-        {WORKER_PACK_RECOMMENDED_PLUGINS.map(plugin => (
-          <RecommendedPluginCard
-            key={plugin.packageName}
-            plugin={plugin}
-            t={t}
-            installed={isInstalled(plugin.packageName)}
-            busy={busy}
-            onInstall={packageName => runInstall([packageName])}
-          />
-        ))}
-      </div>
-      <div className="dshWorkerSection">
-        <h2>{t('laterTitle')}</h2>
-        <p>{t('laterBody')}</p>
-        <div className="dshWorkerActions">
-          <button
-            type="button"
-            className="dshWorkerButton dshWorkerButtonSecondary"
-            disabled={busy || WORKBENCH_LATER_RECOMMENDED_PLUGINS.every(plugin => isInstalled(plugin.packageName))}
-            onClick={() => installKind('later')}
-          >
-            {t('installLater')}
-          </button>
-        </div>
-        {WORKBENCH_LATER_RECOMMENDED_PLUGINS.map(plugin => (
-          <RecommendedPluginCard
-            key={plugin.packageName}
-            plugin={plugin}
-            t={t}
-            installed={isInstalled(plugin.packageName)}
-            busy={busy}
-            onInstall={packageName => runInstall([packageName])}
-          />
-        ))}
-      </div>
-      <div className="dshWorkerSection">
-        <h2>{t('officeImTitle')}</h2>
-        <p>{t('officeImBody')}</p>
-        <div className="dshWorkerActions">
-          <button
-            type="button"
-            className="dshWorkerButton"
-            disabled={busy || OFFICE_IM_RECOMMENDED_PLUGINS.every(plugin => isInstalled(plugin.packageName))}
-            onClick={() => installKind('office-im')}
-          >
-            {t('installOfficeIm')}
-          </button>
-        </div>
-        {OFFICE_IM_RECOMMENDED_PLUGINS.map(plugin => (
-          <RecommendedPluginCard
-            key={plugin.packageName}
-            plugin={plugin}
-            t={t}
-            installed={isInstalled(plugin.packageName)}
-            busy={busy}
-            onInstall={packageName => runInstall([packageName])}
-          />
-        ))}
       </div>
       {install.status === 'busy' ? <p className="dshWorkerStatus">{t('installBusy')}</p> : null}
       {install.status === 'done'
