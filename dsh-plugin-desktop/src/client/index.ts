@@ -11,12 +11,8 @@ import { installDesktopDirectoryPickerBridge, requestDesktopDirectoryValidation 
 import { parseDesktopClientEnvironment } from './environment.ts'
 import { installWorkspaceFolderDrop } from './workspace-folder-drop.ts'
 import { en, zh, type DesktopLocaleKey } from './locales.ts'
-import {
-  COMPANY_EXAMPLE_SETTINGS_SECTION_ID,
-  DESKTOP_BUILTIN_PLUGINS_TAB_ID,
-} from '../worker-pack.ts'
+import { DESKTOP_BUILTIN_PLUGINS_TAB_ID } from '../worker-pack.ts'
 import { CommandPalette } from './CommandPalette.tsx'
-import { CompanyExampleSection } from './CompanyExampleSection.tsx'
 import { DesktopWorkbenchHub } from './DesktopWorkbenchHub.tsx'
 import { DESKTOP_MCP_SETTINGS_KEY, type DesktopMcpSettings } from '../mcp-settings.ts'
 import { DESKTOP_WORKBENCH_SETTINGS_KEY, type DesktopWorkbenchSettings } from '../workbench-settings.ts'
@@ -107,16 +103,7 @@ export function apply(ctx: ClientContext): void {
         workspaces: ctx.workspaces,
       }),
     }, CommandPalette))
-    // Company plugin settings hub — always registered so Enterprise install is reachable.
-    // Built-in / Enterprise / Featured are inner pages of this section, not Plugins tabs.
-    const t = settingsCtx.locale.bind(DESKTOP_CLIENT_LOCALE_NS)
-    settingsCtx.slots.inject('settings.section', () => settingsCtx.slots.register({
-      name: 'settings.section',
-      id: COMPANY_EXAMPLE_SETTINGS_SECTION_ID,
-      order: 90,
-      label: () => t('companyExampleNav'),
-      locale: DESKTOP_CLIENT_LOCALE_NS,
-    }, CompanyExampleSection))
+    // Example Company Settings hub lives in dsh-plugin-company-example's client face.
   })
   if (environment.mode === 'advanced') applyAdvancedShell(ctx, environment)
 }

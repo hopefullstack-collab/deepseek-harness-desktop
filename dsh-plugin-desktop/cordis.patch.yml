@@ -27,6 +27,9 @@
     # Install bridge only — the Company Pack itself stays opt-in (not inserted here).
     - id: desktop-company-pack-install
       name: dsh-plugin-desktop/company-pack-install
+    # Always load the company example Host+Client so Settings → Example Company is reachable.
+    - id: company-example
+      name: dsh-plugin-company-example
 
 # A desktop launch has no terminal operator waiting for the Web readiness line.
 - id: web-runtime

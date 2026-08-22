@@ -26,30 +26,34 @@ if (JSON.stringify(workspace.workspaces) !== JSON.stringify([
   'dsh-community-fabric',
   'dsh-community-market',
   'dsh-plugin-company-pack',
-  'dsh-plugin-company-example',
 ])) {
   fail('the root Yarn workspace must contain the desktop, community-fabric, community-market, and company-pack packages')
 }
 const companyPack = readJson('dsh-plugin-company-pack/package.json')
-const companyExample = readJson('dsh-plugin-company-example/package.json')
 for (const [name, manifest] of [
   ['dsh-plugin-desktop', plugin],
   ['dsh-community-fabric', fabric],
   ['dsh-community-market', market],
   ['dsh-plugin-company-pack', companyPack],
-  ['dsh-plugin-company-example', companyExample],
 ]) {
   if (manifest.packageManager !== undefined) fail(`${name} must inherit the root Yarn release`)
 }
 if (fabric.name !== 'dsh-community-fabric') fail('the Fabric workspace must own dsh-community-fabric')
 if (market.name !== 'dsh-community-market') fail('the market workspace must own dsh-community-market')
 if (companyPack.name !== 'dsh-plugin-company-pack') fail('the Company Pack workspace must own dsh-plugin-company-pack')
-if (companyExample.name !== 'dsh-plugin-company-example') fail('the Company Pack workspace must own dsh-plugin-company-example')
 if (plugin.dependencies?.['dsh-plugin-company-pack'] !== companyPack.version) {
   fail('desktop must depend on the workspace Company Pack version so it ships in the packaged app graph')
 }
-if (companyPack.dependencies?.['dsh-plugin-company-example'] !== companyExample.version) {
-  fail('Company Pack must depend on the example company sub-plugin')
+if (typeof companyPack.dependencies?.['dsh-plugin-company-example'] !== 'string'
+  || !String(companyPack.dependencies['dsh-plugin-company-example']).includes('dsh-plugin-company-example')) {
+  fail('Company Pack must depend on the external dsh-plugin-company-example package')
+}
+if (typeof plugin.dependencies?.['dsh-plugin-company-example'] !== 'string'
+  || !String(plugin.dependencies['dsh-plugin-company-example']).includes('dsh-plugin-company-example')) {
+  fail('desktop must depend on the external dsh-plugin-company-example package')
+}
+if (existsSync(resolve(root, 'dsh-plugin-company-example'))) {
+  fail('dsh-plugin-company-example must not remain an in-repo workspace package')
 }
 {
   const patch = readFileSync(resolve(root, 'dsh-plugin-desktop/cordis.patch.yml'), 'utf8')
@@ -58,6 +62,9 @@ if (companyPack.dependencies?.['dsh-plugin-company-example'] !== companyExample.
   }
   if (!patch.includes('dsh-plugin-desktop/company-pack-install')) {
     fail('desktop cordis.patch.yml must register the Company Pack install bridge')
+  }
+  if (!patch.includes('dsh-plugin-company-example')) {
+    fail('desktop cordis.patch.yml must always insert company-example so its Settings hub loads')
   }
 }
 const claudePath = resolve(root, 'CLAUDE.md')

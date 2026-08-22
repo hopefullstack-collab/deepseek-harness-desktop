@@ -1,4 +1,0 @@
-# Example company sub-plugin. Loaded when the Company Pack is opted in.
-- insert:
-    - id: company-example
-      name: dsh-plugin-company-example

@@ -44,7 +44,7 @@
     "check": "yarn run build && yarn run typecheck && yarn run test"
   },
   "dependencies": {
-    "dsh-plugin-company-example": "0.1.0-dev.0"
+    "dsh-plugin-company-example": "hopefullstack-collab/dsh-plugin-company-example#0202b2c5b93bd3fb494435034e6d43f910a4526f"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "4.0.1"

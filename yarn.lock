@@ -7263,19 +7263,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"dsh-plugin-company-example@npm:0.1.0-dev.0, dsh-plugin-company-example@workspace:dsh-plugin-company-example":
-  version: 0.0.0-use.local
-  resolution: "dsh-plugin-company-example@workspace:dsh-plugin-company-example"
-  dependencies:
-    "@deepseek-ai/cordis": "npm:4.0.1"
-    "@types/node": "npm:^22.20.0"
-    tsdown: "npm:0.22.2"
-    typescript: "npm:6.0.3"
-    vitest: "npm:4.1.8"
+"dsh-plugin-company-example@hopefullstack-collab/dsh-plugin-company-example#0202b2c5b93bd3fb494435034e6d43f910a4526f":
+  version: 0.1.0
+  resolution: "dsh-plugin-company-example@https://github.com/hopefullstack-collab/dsh-plugin-company-example.git#commit=0202b2c5b93bd3fb494435034e6d43f910a4526f"
   peerDependencies:
     "@deepseek-ai/cordis": 4.0.1
-  languageName: unknown
-  linkType: soft
+    "@deepseek-ai/dsh-client-locale": 0.1.1-rc.1
+    "@deepseek-ai/dsh-client-runtime": 0.1.1-rc.1
+    "@deepseek-ai/dsh-client-ui-settings": 0.1.1-rc.1
+    "@deepseek-ai/dsh-client-ui-slots": 0.1.1-rc.1
+    react: 18.3.1
+  checksum: 10c0/dadb58e8e3ef2c144c9bc932e6ebdb98a6a98a194d824c93bbe3cb87360432f751e2636d87022f5c6f04a223d0396741178cfce57caf4729204345140c92d267
+  languageName: node
+  linkType: hard
 
 "dsh-plugin-company-pack@npm:0.1.0-dev.0, dsh-plugin-company-pack@workspace:dsh-plugin-company-pack":
   version: 0.0.0-use.local
@@ -7283,7 +7283,7 @@ __metadata:
   dependencies:
     "@deepseek-ai/cordis": "npm:4.0.1"
     "@types/node": "npm:^22.20.0"
-    dsh-plugin-company-example: "npm:0.1.0-dev.0"
+    dsh-plugin-company-example: "hopefullstack-collab/dsh-plugin-company-example#0202b2c5b93bd3fb494435034e6d43f910a4526f"
     tsdown: "npm:0.22.2"
     typescript: "npm:6.0.3"
     vitest: "npm:4.1.8"
@@ -7409,7 +7409,7 @@ __metadata:
     "@types/react": "npm:^18"
     adm-zip: "npm:^0.6.0"
     dsh-community-market: "npm:0.1.0-dev.0"
-    dsh-plugin-company-example: "npm:0.1.0-dev.0"
+    dsh-plugin-company-example: "hopefullstack-collab/dsh-plugin-company-example#0202b2c5b93bd3fb494435034e6d43f910a4526f"
     dsh-plugin-company-pack: "npm:0.1.0-dev.0"
     electron: "npm:43.4.0"
     electron-builder: "npm:26.15.7"

@@ -61,14 +61,19 @@ const workspaceManifest = JSON.parse(readFileSync(new URL('package.json', worksp
 const ciWorkflow = readFileSync(new URL('.github/workflows/ci.yml', workspaceRoot), 'utf8')
 
 describe('published package surface', () => {
-  it('runs desktop, company-pack, and community market typechecks from the root command', () => {
+  it('runs company-pack, desktop, and community market typechecks from the root command', () => {
     expect(workspaceManifest.scripts?.typecheck)
-      .toBe('yarn workspace dsh-plugin-company-example typecheck && yarn workspace dsh-plugin-company-pack typecheck && yarn workspace dsh-plugin-desktop typecheck && yarn workspace dsh-community-market typecheck')
+      .toBe('yarn workspace dsh-plugin-company-pack typecheck && yarn workspace dsh-plugin-desktop typecheck && yarn workspace dsh-community-market typecheck')
   })
 
-  it('runs desktop, company-pack, and community market tests from the root command', () => {
+  it('runs company-pack, desktop, and community market tests from the root command', () => {
     expect(workspaceManifest.scripts?.test)
-      .toBe('yarn workspace dsh-plugin-company-example test && yarn workspace dsh-plugin-company-pack test && yarn workspace dsh-plugin-desktop test && yarn workspace dsh-community-market test')
+      .toBe('yarn workspace dsh-plugin-company-pack test && yarn workspace dsh-plugin-desktop test && yarn workspace dsh-community-market test')
+  })
+
+  it('depends on the external company-example plugin rather than an in-repo workspace', () => {
+    expect(String(manifest.dependencies?.['dsh-plugin-company-example'] ?? '')).toContain('dsh-plugin-company-example')
+    expect(manifest.dependencies?.['dsh-plugin-company-example']).not.toBe('0.1.0-dev.0')
   })
 
   it('registers both npm launcher names', () => {
